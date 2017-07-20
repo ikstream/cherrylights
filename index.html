@@ -1,0 +1,338 @@
+<html>
+	<head>
+		<title>Control LED-Strips</title>
+		<style>
+			.button {
+				border: none;
+				width: 100px;
+				height: 25px;
+			}
+			.color_button {
+				border: none;
+				width: 100px;
+				height: 25px;
+			}
+			.button1 {
+				width: 100px;
+				height: 25px;
+			}
+			.button2 {
+				width: 204px;
+				height: 25px;
+			}
+			.cb {
+				width: 200px;
+				height: 25px;
+			}
+
+		</style>
+		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+		<script type='text/javascript'>
+			$(document).ready(function() {
+				$("color_button").click(function(e) {
+					$.ajax({
+						url: "/colorButtonClick",
+						type: "POST",
+						data: {id: $(this).id(), val: $(this).val()},
+						success: function(response) {
+							alert(response);
+						}
+					});
+				});
+				$("#off").click(function(e) {
+					$.ajax({
+						url: "/controlButtonClick",
+						type: "POST",
+						data: {id: "off"},
+						success: function(response) {
+							alert(response);
+						}
+					});
+				});
+				$("#on").click(function(e) {
+					$.ajax({
+						url: "/controlButtonClick",
+						type: "POST",
+						data: {id: "on"},
+						success: function(response) {
+							alert(response);
+						}
+					});
+				});
+				$("#fade").click(function(e) {
+					$.ajax({
+						url: "/controlButtonClick",
+						type: "POST",
+						data: {id: "fade"},
+						success: function(response) {
+							alert(response);
+						}
+					});
+				});
+				$("#jump").click(function(e) {
+					$.ajax({
+						url: "/controlButtonClick",
+						type: "POST",
+						data: {id: "jump"},
+						success: function(response) {
+							alert(response);
+						}
+					});
+				});
+
+			});
+		</script>
+	</head>
+	<body>
+		<script>
+			function check_all(){
+				document.getElementById("ur").checked=true
+				document.getElementById("lr").checked=true
+				document.getElementById("ul").checked=true
+				document.getElementById("ll").checked=true
+				document.getElementById("lb").checked=true
+				document.getElementById("ub").checked=true
+			}
+
+			function uncheck_all() {
+				document.getElementById("ur").checked=false
+				document.getElementById("lr").checked=false
+				document.getElementById("ul").checked=false
+				document.getElementById("ll").checked=false
+				document.getElementById("lb").checked=false
+				document.getElementById("ub").checked=false
+			}
+
+			function switch_on() {
+				set_color(Math.floor(Math.random() * 254) + 1, Math.floor(Math.random() * 254) + 1, Math.floor(Math.random() * 254) + 1);
+			}
+
+			function switch_off() {
+				set_color(0,0,0);
+			}
+		</script>
+
+		<script>
+			function fade_lights() {
+
+			}
+
+			function jump() {
+
+			}
+
+			function init_lights(web_lights) {
+				for (var light in web_lights) {
+					web_lights[light] = 0;
+				}
+				return web_lights;
+			}
+
+			function set_color(r,g,b) {
+				var ur = document.getElementById("ur").checked;
+				var lr = document.getElementById("lr").checked;
+				var ul = document.getElementById("ul").checked;
+				var ll = document.getElementById("ll").checked;
+				var ub = document.getElementById("ub").checked;
+				var lb = document.getElementById("lb").checked;
+				var web_lights = {}
+				web_lights = init_lights(web_lights);
+
+				if (ur) {
+					document.getElementById("t_ur").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['ur'] = 1;
+				}
+				if (lr) {
+					document.getElementById("t_lr").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['lr'] = 1;
+				}
+				if (ul) {
+					document.getElementById("t_ul").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['ul'] = 1;
+				}
+				if (ll) {
+					document.getElementById("t_ll").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['ll'] = 1;
+				}
+				if (ub) {
+					document.getElementById("t_ub").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['ub'] = 1;
+				}
+				if (lb) {
+					document.getElementById("t_lb").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['lb'] = 1;
+				}
+				$.ajax({
+					url: "/setLights",
+					type: "POST",
+					data: web_lights,
+					success: function(response) {
+						alert(response);
+					}
+				});
+		}
+		</script>
+
+		<script>
+			function hexToR(h) {return parseInt((cutHex(h)).substring(0,2),16)}
+			function hexToG(h) {return parseInt((cutHex(h)).substring(2,4),16)}
+			function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)}
+			function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h}
+
+			function setHex() {
+				var val = document.getElementById("colorPick").value;
+				var r = hexToR(val);
+				var g = hexToG(val);
+				var b = hexToB(val);
+				var colors = {};
+				colors['red'] = r;
+				colors['green'] = g;
+				colors['blue'] = b;
+				$.ajax({
+					url: "/pickColor",
+					type: "POST",
+					data: colors,
+					success: function(response) {
+						alert(response);
+					}
+				});
+			set_color(r,g,b);
+			}
+		</script>
+
+		<article>
+			<table border="0">
+				<tr>
+					<td colspan="8">
+						<h5> Vorne </h5>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="4">
+						<input type="text" 
+						id="t_ur"
+						disabled="true"
+						style="width:410px;">
+					</td>
+					<td colspan="4">
+						<input type="text"
+						id="t_ul"
+						disabled="true"
+						style="width:412px;">
+					</td>
+				</tr>
+				<tr>
+					<td colspan="4">
+						<input type="text"
+						id="t_lr"
+						 disabled="true"
+						style="width:410px;">
+					</td>
+					<td colspan="4">
+						<input type="text"
+						id="t_ll"
+						disabled="true"
+						style="width:412px;">
+					</td>
+				</tr>
+				<tr>
+					<td colspan="8">
+						<h5> Hinten </h5>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="8">
+						<input type="text"
+						id="t_ub"
+						disabled="true"
+						style="width:828px;">
+					</td>
+				</tr>
+				<tr>
+					<td colspan="8">
+						<input type="text"
+						id="t_lb"
+						disabled="true"
+						style="width:828px;">
+					</td>
+				</tr>
+
+				<tr>
+					<td><label><input type="checkbox" id="ur">
+						<font size="1">oben links</font></label></td>
+					<td><label><input type="checkbox" id="lr">
+						<font size="1">unten links</font></label></td>
+					<td><label><input type="checkbox" id="ul">
+						<font size="1">oben rechts</font></label></td>
+					<td><label><input type="checkbox" id="ll">
+						<font size="1">unten rechts</font></label></td>
+					<td><input type="button" class="button1" id="all"
+						value="alle" name="all" onclick="check_all()"></td>
+					<td><input type="button" class="button1" id="none"
+						value="keine" onclick="uncheck_all()"></td>
+					<td><input type="button" class="button1" id="fade"
+						value="fade" name="fade" onclick="fade_lights()"></td>
+					<td><input type="button" class="button1" id="jump"
+						value="Jump" onclick="jump()"></td>
+				</tr>
+				<tr>
+					<td><label><input type="checkbox" id="ub" class="cb1">
+						<font size="1">hinten oben</font></label></td>
+					<td><input type="button" class="button1" id="hidden1"
+						hidden="hidden" value="hidden1" name="hidden1"></td>
+					<td><label><input type="checkbox" id="lb" class="cb1">
+						<font size="1">hinten unten</devfont></label></td>
+					<td><input type="button" class="button1" id="hidden2"
+						hidden="hidden" value="hidden2" name="hidden2"></td>
+					<td colspan="2"><input type="button" class="button2" value="An" id="on"
+						onclick="switch_on()"></td>
+					<td colspan="2"><input type="button" class="button2" value="Aus" id="off"
+						onclick="switch_off()"></td>
+				</tr>
+				<tr>
+					<td><input type="button" class="color_button"
+						id="red" name="red" value="FF0000"
+						onclick="set_color(255,0,0)"
+						style="background-color:red;">
+					</td>
+					<td><input type="button" class="color_button"
+						id="green" value="008000"
+						onclick="set_color(0,128,0)"
+						style="background-color:green;">
+					</td>
+					<td><input type="button" class="color_button"
+						id="blue" value="0000FF"
+						onclick="set_color(0,0,255)"
+						style="background-color:blue;">
+					</td>
+					<td><input type="button" class="color_button"
+						id="white" value="FFFFFF"
+						onclick="set_color(255,255,255)"
+						style="background-color:white;">
+					</td>
+					<td><input type="button" class="color_button"
+						id="purple" value="800080"
+						onclick="set_color(128,0,128)"
+						style="background-color:purple;">
+					</td>
+					<td><input type="button" class="color_button"
+						id="orange" value="FFA500"
+						onclick="set_color(255,165,0)"
+						style="background-color:orange;">
+					</td>
+					<td><input type="button" class="color_button"
+						id="yellow" value="FFFF00"
+						onclick="set_color(255,255,0)"
+						style="background-color:yellow;">
+					</td>
+					<td><input type="color" class="button"
+						id="colorPick"
+						onChange="setHex()">
+					</td>
+
+				</tr>
+			</table>
+		</article>
+
+	</body>
+</html>
