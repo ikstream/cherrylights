@@ -27,45 +27,66 @@
 
 		</style>
 		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+		<script>
+			function get_web_lights(r,g,b) {
+				var ur = document.getElementById("ur").checked;
+				var lr = document.getElementById("lr").checked;
+				var ul = document.getElementById("ul").checked;
+				var ll = document.getElementById("ll").checked;
+				var ub = document.getElementById("ub").checked;
+				var lb = document.getElementById("lb").checked;
+				var web_lights = {}
+				web_lights = init_lights(web_lights);
+
+				if (ur) {
+					document.getElementById("t_ur").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['ur'] = 1;
+				}
+				if (lr) {
+					document.getElementById("t_lr").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['lr'] = 1;
+				}
+				if (ul) {
+					document.getElementById("t_ul").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['ul'] = 1;
+				}
+				if (ll) {
+					document.getElementById("t_ll").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['ll'] = 1;
+				}
+				if (ub) {
+					document.getElementById("t_ub").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['ub'] = 1;
+				}
+				if (lb) {
+					document.getElementById("t_lb").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
+					web_lights['lb'] = 1;
+				}
+				return web_lights;
+			}
+		</script>
 		<script type='text/javascript'>
 			$(document).ready(function() {
-				$("color_button").click(function(e) {
-					$.ajax({
-						url: "/colorButtonClick",
-						type: "POST",
-						data: {id: $(this).id(), val: $(this).val()},
-						success: function(response) {
-							alert(response);
-						}
-					});
-				});
 				$("#off").click(function(e) {
 					$.ajax({
 						url: "/controlButtonClick",
 						type: "POST",
-						data: {id: "off"},
-						success: function(response) {
-							alert(response);
-						}
+						data: {id: "off"}
 					});
 				});
 				$("#on").click(function(e) {
 					$.ajax({
 						url: "/controlButtonClick",
 						type: "POST",
-						data: {id: "on"},
-						success: function(response) {
-							alert(response);
-						}
+						data: {id: "on"}
 					});
 				});
 				$("#fade").click(function(e) {
 					$.ajax({
 						url: "/controlButtonClick",
 						type: "POST",
-						data: {id: "fade"},
-						success: function(response) {
-							alert(response);
+						data: { id: "fade",
+							web_lights: get_web_lights(0,0,0)
 						}
 					});
 				});
@@ -73,17 +94,14 @@
 					$.ajax({
 						url: "/controlButtonClick",
 						type: "POST",
-						data: {id: "jump"},
-						success: function(response) {
-							alert(response);
-						}
+						data: {id: "jump"}
 					});
 				});
 
 			});
 		</script>
 	</head>
-	<body>
+	<body background="bg_cherrylights.jpg">
 		<script>
 			function check_all(){
 				document.getElementById("ur").checked=true
@@ -129,45 +147,14 @@
 			}
 
 			function set_color(r,g,b) {
-				var ur = document.getElementById("ur").checked;
-				var lr = document.getElementById("lr").checked;
-				var ul = document.getElementById("ul").checked;
-				var ll = document.getElementById("ll").checked;
-				var ub = document.getElementById("ub").checked;
-				var lb = document.getElementById("lb").checked;
-				var web_lights = {}
-				web_lights = init_lights(web_lights);
-
-				if (ur) {
-					document.getElementById("t_ur").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
-					web_lights['ur'] = 1;
-				}
-				if (lr) {
-					document.getElementById("t_lr").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
-					web_lights['lr'] = 1;
-				}
-				if (ul) {
-					document.getElementById("t_ul").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
-					web_lights['ul'] = 1;
-				}
-				if (ll) {
-					document.getElementById("t_ll").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
-					web_lights['ll'] = 1;
-				}
-				if (ub) {
-					document.getElementById("t_ub").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
-					web_lights['ub'] = 1;
-				}
-				if (lb) {
-					document.getElementById("t_lb").style.backgroundColor = 'rgb(' + r + ', '+ g +',' + b + ')'
-					web_lights['lb'] = 1;
-				}
+				var web_lights = get_web_lights(r, g, b);
 				$.ajax({
 					url: "/setLights",
 					type: "POST",
-					data: web_lights,
-					success: function(response) {
-						alert(response);
+					data: { red: r,
+						green: g,
+						blue: b,
+						web_lights: web_lights
 					}
 				});
 		}
@@ -188,15 +175,7 @@
 				colors['red'] = r;
 				colors['green'] = g;
 				colors['blue'] = b;
-				$.ajax({
-					url: "/pickColor",
-					type: "POST",
-					data: colors,
-					success: function(response) {
-						alert(response);
-					}
-				});
-			set_color(r,g,b);
+				set_color(r,g,b);
 			}
 		</script>
 
@@ -258,13 +237,13 @@
 				</tr>
 
 				<tr>
-					<td><label><input type="checkbox" id="ur">
-						<font size="1">oben links</font></label></td>
-					<td><label><input type="checkbox" id="lr">
-						<font size="1">unten links</font></label></td>
 					<td><label><input type="checkbox" id="ul">
-						<font size="1">oben rechts</font></label></td>
+						<font size="1">oben links</font></label></td>
 					<td><label><input type="checkbox" id="ll">
+						<font size="1">unten links</font></label></td>
+					<td><label><input type="checkbox" id="ur">
+						<font size="1">oben rechts</font></label></td>
+					<td><label><input type="checkbox" id="lr">
 						<font size="1">unten rechts</font></label></td>
 					<td><input type="button" class="button1" id="all"
 						value="alle" name="all" onclick="check_all()"></td>
@@ -293,37 +272,37 @@
 					<td><input type="button" class="color_button"
 						id="red" name="red" value="FF0000"
 						onclick="set_color(255,0,0)"
-						style="background-color:red;">
+						style="color:red;background-color:red;">
 					</td>
 					<td><input type="button" class="color_button"
 						id="green" value="008000"
 						onclick="set_color(0,128,0)"
-						style="background-color:green;">
+						style="background-color:green;color:green">
 					</td>
 					<td><input type="button" class="color_button"
 						id="blue" value="0000FF"
 						onclick="set_color(0,0,255)"
-						style="background-color:blue;">
+						style="background-color:blue;color:blue">
 					</td>
 					<td><input type="button" class="color_button"
 						id="white" value="FFFFFF"
 						onclick="set_color(255,255,255)"
-						style="background-color:white;">
+						style="background-color:white;color:white">
 					</td>
 					<td><input type="button" class="color_button"
 						id="purple" value="800080"
 						onclick="set_color(128,0,128)"
-						style="background-color:purple;">
+						style="background-color:purple;color:purple">
 					</td>
 					<td><input type="button" class="color_button"
 						id="orange" value="FFA500"
 						onclick="set_color(255,165,0)"
-						style="background-color:orange;">
+						style="background-color:orange;color:orange">
 					</td>
 					<td><input type="button" class="color_button"
 						id="yellow" value="FFFF00"
 						onclick="set_color(255,255,0)"
-						style="background-color:yellow;">
+						style="background-color:yellow;color:yellow">
 					</td>
 					<td><input type="color" class="button"
 						id="colorPick"

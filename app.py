@@ -31,11 +31,11 @@ import pigpio
 
 import os
 import json
+import re
 
 import cherrypy
 from cherrypy.lib.static import serve_file
 
-GPIO.setmode(GPIO.BCM)
 
 path = os.path.abspath(os.path.dirname(__file__))
 CURDIR = os.getcwd()
@@ -43,42 +43,29 @@ CURDIR = os.getcwd()
 cherrypy.config.update({
     "tools.staticdir.dir": CURDIR,
     "tools.staticdir.on": True,
-    "server.socket_host": "192.168.0.5"
+    "server.socket_host": "192.168.0.10"
 })
 
 #define some values for later use
-FULL = 255
+ON = 255
 OFF = 0
 
-back_pins = {
-    'UB_RED' : '18',
-    'UB_GREEN' : '23',
-    'UB_BLU' : '24',
-    'LB_RED' : '25',
-    'LB_GREEN' : '8',
-    'LB_BLUE' : '7'
+back_pi_lights = {
+        'ub' : [13, 19, 26],
+        'lb' : [16, 20, 21]
 }
 
-front_pins = {
-    'UR_RED': '18',
-    'UR_GREEN': '23',
-    'UR_BLUE': '24',
-    'LR_RED': '25',
-    'LR_GREEN': '8',
-    'LR_BLUE': '7',
-    'UL_RED': '17',
-    'UL_GREEN': '21',
-    'UL_BLUE': '22',
-    'LL_RED': '10',
-    'LL_GREEN': '9',
-    'LL_BLUE': '11'
+front_pi_lights = {
+        'ur' : [18, 23, 24],
+        'lr' : [16, 20, 21],
+        'ul' : [17, 27, 22],
+        'll' : [13, 19, 26]
 }
 
-lights = {}
 
-remote_pi = '192.168.0.10'
-pi = pigpio.pi()
-front_pi = pigpio.pi(remote_pi)
+#front_pi_ip = '192.168.0.6'
+back_pi = pigpio.pi()
+#front_pi = pigpio.pi(front_pi_ip)
 
 
 class LightControll(object):
@@ -86,11 +73,18 @@ class LightControll(object):
     lights = {}
 
     def __init__(self):
-        for pin in back_pins.values():
-            pi.set_PWM_dutycycle(pin, OFF)
+        for light in back_pi_lights.values():
+            print(light)
+            for pin in light:
+                print(pin)
+                back_pi.set_PWM_dutycycle(int(pin), OFF)
 
-        for pin in front_pins.values():
-            front_pi.set_PWM_dutycycle(pin, OFF)
+
+    def resolveLights(self, **web_lights):
+        for key in web_lights:
+            self.lights[re.search(r'\[(.*?)\]',key).group(1)] = web_lights[key]
+        print("weblights {}".format(web_lights))
+        print("lights: {}".format(self.lights))
 
 
     @cherrypy.expose
@@ -103,102 +97,45 @@ class LightControll(object):
 
 
     @cherrypy.expose
-    def setLights(self, **web_lights):
-        lights = web_lights
-        for light in lights:
-            print("light: {}: {}\n".format(light, lights[light]))
+    def setLights(self, red, green, blue, **web_lights):
+        self.resolveLights(**web_lights)
+        for light in self.lights:
+            print("light: {}: {}\n".format(light, self.lights[light]))
+            if light in back_pi_lights:
+                    back_pi.set_PWM_dutycycle(int(back_pi_lights[light][0]), red)
+                    back_pi.set_PWM_dutycycle(int(back_pi_lights[light][1]), green)
+                    back_pi.set_PWM_dutycycle(int(back_pi_lights[light][2]), blue)
+        self.lights = {}
 
 
-    def fade_lights(self):
+    def fadeLights(self, **web_lights):
+        self.resolveLights(**web_lights)
+        print("in fadeLights")
         x = 5
+        self.lights = {}
 
 
     @cherrypy.expose
-    def pickColor(self, **colors):
-        red = colors['red']
-        green = colors['green']
-        blue = colors['blue']
-
-        for light in lights.keys():
-            [pin for key, pin in back_pins.items() if str(light).upper() in key]
-            [color for color, value in back_pins.items() if str(key).lower in color]
-            pi.set_PWM_dutycycle(pin, value)
-        #TODO: create sublistst for each light with partial key matching
-        #   Then set values accordingly
-        if red:
-            GPIO.output(self.RED_LED, True)
-            print("red: {} ".format(red))
-        if green:
-            GPIO.output(self.GREEN_LED, True)
-            print("green: {} ".format(green))
-        if blue:
-            GPIO.output(self.BLUE_LED, True)
-            print("blue {}\n".format(blue))
-
-        for color in colors:
-            print("{}: {}".format(color, colors[color]))
-
-
-    @cherrypy.expose
-    def controlButtonClick(self, id):
+    def controlButtonClick(self, id, **web_lights):
         print("id: {}\n".format(id))
         if id in 'off':
-            for pin in back_pins.values():
-                pi.set_PWM_dutycycle(pin, OFF)
-
-            for pin in front_pins.values():
-                front_pi.set_PWM_dutycycle(pin, OFF)
+            print("in off")
+            for light in back_pi_lights.values():
+                for pin in light:
+                    print(pin)
+                    back_pi.set_PWM_dutycycle(int(pin), OFF)
 
         if id in 'on':
-            for pin in back_pins.values():
-                pi.set_PWM_dutycycle(pin, OFF)
+            print("in on")
+            for light in back_pi_lights.values():
+                for pin in light:
+                    print(pin)
+                    back_pi.set_PWM_dutycycle(int(pin), ON)
 
-            for pin in front_pins.values():
-                front_pi.set_PWM_dutycycle(pin, OFF)
-
-    def hex_to_val(hexstring):
-        #TODO: calculate rgb values vrom hex string
-        x=42
-        rgb = []
-        return rgb
-
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def colorButtonClick(self, id, val):
-        rgb = hex_to_val(val)
-        if id:
-            if id in 'green':
-                GPIO.output(self.GREEN_LED, True)
-                GPIO.output(self.BLUE_LED, False)
-                GPIO.output(self.RED_LED, False)
-            elif id in 'blue':
-                GPIO.output(self.GREEN_LED, False)
-                GPIO.output(self.BLUE_LED, True)
-                GPIO.output(self.RED_LED, False)
-
-            elif id in 'red':
-                GPIO.output(self.GREEN_LED, False)
-                GPIO.output(self.BLUE_LED, False)
-                GPIO.output(self.RED_LED, True)
-            elif id in 'white':
-                GPIO.output(self.GREEN_LED, True)
-                GPIO.output(self.RED_LED, True)
-                GPIO.output(self.BLUE_LED, True)
-            elif id in 'purple':
-                GPIO.output(self.GREEN_LED, False)
-                GPIO.output(self.RED_LED, True)
-                GPIO.output(self.BLUE_LED, True)
-            elif id in 'orange':
-                GPIO.output(self.GREEN_LED, True)
-                GPIO.output(self.RED_LED, True)
-                GPIO.output(self.BLUE_LED, False)
-            elif id in 'yellow':
-                GPIO.output(self.GREEN_LED, True)
-                GPIO.output(self.RED_LED, True)
-                GPIO.output(self.BLUE_LED, False)
-
-        return json.dumps({"button": "{}" .format(id)})
+        if id in 'fade':
+            print("in fade")
+            if web_lights:
+                self.fadeLights(**web_lights)
 
 
 if __name__ == '__main__':
