@@ -26,7 +26,6 @@
 #
 ################################################################################
 
-import RPi.GPIO as GPIO
 import pigpio
 
 import os
@@ -74,21 +73,41 @@ fade_lights = { 'ub' : 0,
                 'll' : 0
 }
 
-#front_pi_ip = '192.168.0.6'
+front_pi_ip = '192.168.0.6'
 back_pi = pigpio.pi()
-#front_pi = pigpio.pi(front_pi_ip)
+front_pi = pigpio.pi(front_pi_ip)
 
 class LightControll(object):
     lights = {}
 
     def __init__(self):
+        initFade()
         for light in back_pi_lights.values():
             print(light)
             for pin in light:
                 print(pin)
                 back_pi.set_PWM_dutycycle(int(pin), OFF)
+        for light in front_pi_lights.values():
+            print(light)
+            for pin in light:
+                print(pin)
+                front_pi.set_PWM_dutycycle(int(pin), OFF)
 
 
+    # fade functions
+    def initFade():
+        fade_lights = {fade_light: 0 for fade_light in fade_lights};
+
+
+    def setFade(light):
+        fade_lights[light] = 1
+
+
+    def unsetFade(light):
+        fade_lights[light] = 0
+
+
+    # set lights to use
     def resolveLights(self, **web_lights):
         for key in web_lights:
             self.lights[re.search(r'\[(.*?)\]',key).group(1)] = web_lights[key]
@@ -96,6 +115,7 @@ class LightControll(object):
         print("lights: {}".format(self.lights))
 
 
+    # show website
     @cherrypy.expose
     def index(self):
         return serve_file(os.path.join(path, 'index.html'))
@@ -105,25 +125,32 @@ class LightControll(object):
         return int(int(value) * (float(bright) / 255.0))
 
 
+    # set color on color button click
     @cherrypy.expose
     def setLights(self, red, green, blue, **web_lights):
         self.resolveLights(**web_lights)
         for light in self.lights:
+            unsetFade(light)
             print("light: {}: {}\n".format(light, self.lights[light]))
             if light in back_pi_lights:
                 back_pi.set_PWM_dutycycle(int(back_pi_lights[light][R]), red)
                 back_pi.set_PWM_dutycycle(int(back_pi_lights[light][G]), green)
                 back_pi.set_PWM_dutycycle(int(back_pi_lights[light][B]), blue)
+            if light in front_pi_lights:
+                front_pi.set_PWM_dutycycle(int(front_pi_lights[light][R]), red)
+                front_pi.set_PWM_dutycycle(int(front_pi_lights[light][G]), green)
+                front_pi.set_PWM_dutycycle(int(front_pi_lights[light][B]), blue)
         self.lights = {}
 
 
-    def fadeLight(r_pin, g_pin, b_pini, light):
+    # fade light
+    def fadeLight(r_pin, g_pin, b_pin, light):
         dim_green = 1
         dim_blue = 0
         fade_red = back_pi.get_PWM_dutycycle(r_pin)
         fade_green = back_pi.get_PWM_dutycycle(g_pin)
         fade_blue = back_pi.get_PWM_dutycycle(b_pin)
-        while self.fade_lights[light]:
+        while fade_lights[light]:
             # dim green to zero
             if fade_green > 4 and dim_green:
                 if light in back_pi_lights:
@@ -244,7 +271,7 @@ class LightControll(object):
     def fadeLights(self, **web_lights):
         self.resolveLights(**web_lights)
         for light in self.lights:
-
+            setFade(light)
         print("in fadeLights")
         x = 5
         self.lights = {}
@@ -259,13 +286,22 @@ class LightControll(object):
                 for pin in light:
                     print(pin)
                     back_pi.set_PWM_dutycycle(int(pin), OFF)
+            for light in front_pi_lights.values():
+                for pin in light:
+                    print(pin)
+                    back_pi.set_PWM_dutycycle(int(pin), OFF)
 
         if id in 'on':
+            initFade()
             print("in on")
             for light in back_pi_lights.values():
                 for pin in light:
                     print(pin)
                     back_pi.set_PWM_dutycycle(int(pin), ON)
+            for light in front_pi_lights.values():
+                for pin in light:
+                    print(pin)
+                    front_pi.set_PWM_dutycycle(int(pin), ON)
 
         if id in 'fade':
             print("in fade")
