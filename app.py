@@ -32,6 +32,7 @@ import os
 import json
 import re
 import time
+import threading
 
 import cherrypy
 from cherrypy.lib.static import serve_file
@@ -100,6 +101,10 @@ class LightControll(object):
 
 
     def setFade(light):
+        if fade_lights[light] == 1:
+            fade_light[light] =0
+            time.sleep(0.2)
+
         fade_lights[light] = 1
 
 
@@ -147,9 +152,14 @@ class LightControll(object):
     def fadeLight(r_pin, g_pin, b_pin, light):
         dim_green = 1
         dim_blue = 0
-        fade_red = back_pi.get_PWM_dutycycle(r_pin)
-        fade_green = back_pi.get_PWM_dutycycle(g_pin)
-        fade_blue = back_pi.get_PWM_dutycycle(b_pin)
+        if light in back_pi_lights:
+            fade_red = back_pi.get_PWM_dutycycle(r_pin)
+            fade_green = back_pi.get_PWM_dutycycle(g_pin)
+            fade_blue = back_pi.get_PWM_dutycycle(b_pin)
+        else:
+            fade_red = front_pi.get_PWM_dutycycle(r_pin)
+            fade_green = front_pi.get_PWM_dutycycle(g_pin)
+            fade_blue = front_pi.get_PWM_dutycycle(b_pin)
         while fade_lights[light]:
             # dim green to zero
             if fade_green > 4 and dim_green:
@@ -271,9 +281,15 @@ class LightControll(object):
     def fadeLights(self, **web_lights):
         self.resolveLights(**web_lights)
         for light in self.lights:
-            setFade(light)
+            self.setFade(light)
+            if light in back_pi_lights:
+                fade_args = [back_pi_lights[light][R], back_pi_lights[light][G], back_pi_lights[light][B], light]
+                threading.Thread(target=fadeLight, args=(fade_args,)).start()
+            else:
+                fade_args = [front_pi_lights[light][R], front_pi_lights[light][G], front_pi_lights[light][B], light]
+                threading.Thread(target=fadeLight, args=(fade_args,)).start()
+
         print("in fadeLights")
-        x = 5
         self.lights = {}
 
 
