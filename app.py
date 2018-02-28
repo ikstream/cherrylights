@@ -32,6 +32,7 @@ import os
 import re
 import time
 import threading
+import socket
 
 import pigpio
 import cherrypy
@@ -43,7 +44,7 @@ CURDIR = os.getcwd()
 cherrypy.config.update({
     "tools.staticdir.dir": CURDIR,
     "tools.staticdir.on": True,
-    "server.socket_host": "192.168.0.10"
+    "server.socket_host": socket.gethostbyname(socket.gethostname())
 })
 
 #define some values for later use
