@@ -122,7 +122,7 @@ class LightControll(object):
     @classmethod
     def resolve_pins(cls, light):
         """return the pin numbers for a given light"""
-        c_light = cls.resolve_lights(light)
+        c_light = cls.resolve_pi_lights(light)
         return c_light[light]
 
     # set lights to use
