@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""provide a webfrontend to set 12V LED light strips"""
 
 ################################################################################
 # MIT License
@@ -12,10 +13,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,18 +27,17 @@
 #
 ################################################################################
 
-import pigpio
 
 import os
-import json
 import re
 import time
 
+import pigpio
 import cherrypy
 from cherrypy.lib.static import serve_file
 
 
-path = os.path.abspath(os.path.dirname(__file__))
+PATH = os.path.abspath(os.path.dirname(__file__))
 CURDIR = os.getcwd()
 
 cherrypy.config.update({
@@ -53,64 +53,59 @@ R = 0
 G = 1
 B = 2
 
-back_pi_lights = {
-        'ub' : [13, 19, 26],
-        'lb' : [16, 20, 21]
+BACK_PI_LIGHTS = {
+    'ub' : [13, 19, 26],
+    'lb' : [16, 20, 21]
 }
 
-front_pi_lights = {
-        'ur' : [18, 23, 24],
-        'lr' : [16, 20, 21],
-        'ul' : [17, 27, 22],
-        'll' : [13, 19, 26]
+FRONT_PI_LIGHTS = {
+    'ur' : [18, 23, 24],
+    'lr' : [16, 20, 21],
+    'ul' : [17, 27, 22],
+    'll' : [13, 19, 26]
 }
 
-fade_lights = { 'ub' : 0,
+
+FRONT_PI_IP = '192.168.0.6'
+BACK_PI = pigpio.pi()
+FRONT_PI = pigpio.pi(FRONT_PI_IP)
+
+class LightControll(object):
+    """Contains information and action about the light control"""
+    lights = {}
+
+    f_lights = {'ub' : 0,
                 'lb' : 0,
                 'ur' : 0,
                 'lr' : 0,
                 'ul' : 0,
                 'll' : 0
-}
-
-front_pi_ip = '192.168.0.6'
-back_pi = pigpio.pi()
-front_pi = pigpio.pi(front_pi_ip)
-
-class LightControll(object):
-    lights = {}
-
-    def __init__(self):
-        initFade()
-        for light in back_pi_lights.values():
-            print(light)
-            for pin in light:
-                print(pin)
-                back_pi.set_PWM_dutycycle(int(pin), OFF)
-        for light in front_pi_lights.values():
-            print(light)
-            for pin in light:
-                print(pin)
-                front_pi.set_PWM_dutycycle(int(pin), OFF)
-
+               }
 
     # fade functions
-    def initFade():
-        fade_lights = {fade_light: 0 for fade_light in fade_lights};
+    @classmethod
+    def init_fade(cls):
+        """initialize all lights not to fade"""
+        cls.f_lights = {f_light: 0 for f_light in cls.f_lights}
 
 
-    def setFade(light):
-        fade_lights[light] = 1
+    @classmethod
+    def set_fade(cls, light):
+        """set light to fade"""
+        cls.f_lights[light] = 1
 
 
-    def unsetFade(light):
-        fade_lights[light] = 0
+    @classmethod
+    def unset_fade(cls, light):
+        """set light not to fade"""
+        cls.f_lights[light] = 0
 
 
     # set lights to use
-    def resolveLights(self, **web_lights):
+    def resolve_lights(self, **web_lights):
+        """set LED strips to work on"""
         for key in web_lights:
-            self.lights[re.search(r'\[(.*?)\]',key).group(1)] = web_lights[key]
+            self.lights[re.search(r'\[(.*?)\]', key).group(1)] = web_lights[key]
         print("weblights {}".format(web_lights))
         print("lights: {}".format(self.lights))
 
@@ -118,53 +113,53 @@ class LightControll(object):
     # show website
     @cherrypy.expose
     def index(self):
-        return serve_file(os.path.join(path, 'index.html'))
-
-
-    def setRealValue(value):
-        return int(int(value) * (float(bright) / 255.0))
+        """serve HTML file"""
+        return serve_file(os.path.join(PATH, 'index.html'))
 
 
     # set color on color button click
     @cherrypy.expose
-    def setLights(self, red, green, blue, **web_lights):
-        self.resolveLights(**web_lights)
+    def set_lights(self, red, green, blue, **web_lights):
+        """set static color for LED Strips"""
+        self.resolve_lights(**web_lights)
         for light in self.lights:
-            unsetFade(light)
+            self.unset_fade(light)
             print("light: {}: {}\n".format(light, self.lights[light]))
-            if light in back_pi_lights:
-                back_pi.set_PWM_dutycycle(int(back_pi_lights[light][R]), red)
-                back_pi.set_PWM_dutycycle(int(back_pi_lights[light][G]), green)
-                back_pi.set_PWM_dutycycle(int(back_pi_lights[light][B]), blue)
-            if light in front_pi_lights:
-                front_pi.set_PWM_dutycycle(int(front_pi_lights[light][R]), red)
-                front_pi.set_PWM_dutycycle(int(front_pi_lights[light][G]), green)
-                front_pi.set_PWM_dutycycle(int(front_pi_lights[light][B]), blue)
+            if light in BACK_PI_LIGHTS:
+                BACK_PI.set_PWM_dutycycle(int(BACK_PI_LIGHTS[light][R]), red)
+                BACK_PI.set_PWM_dutycycle(int(BACK_PI_LIGHTS[light][G]), green)
+                BACK_PI.set_PWM_dutycycle(int(BACK_PI_LIGHTS[light][B]), blue)
+            if light in FRONT_PI_LIGHTS:
+                FRONT_PI.set_PWM_dutycycle(int(FRONT_PI_LIGHTS[light][R]), red)
+                FRONT_PI.set_PWM_dutycycle(int(FRONT_PI_LIGHTS[light][G]), green)
+                FRONT_PI.set_PWM_dutycycle(int(FRONT_PI_LIGHTS[light][B]), blue)
         self.lights = {}
 
 
     # fade light
-    def fadeLight(r_pin, g_pin, b_pin, light):
+    @classmethod
+    def fade_light(cls, r_pin, g_pin, b_pin, light):
+        """per LED strip fade function"""
         dim_green = 1
         dim_blue = 0
-        fade_red = back_pi.get_PWM_dutycycle(r_pin)
-        fade_green = back_pi.get_PWM_dutycycle(g_pin)
-        fade_blue = back_pi.get_PWM_dutycycle(b_pin)
-        while fade_lights[light]:
+        fade_red = BACK_PI.get_PWM_dutycycle(r_pin)
+        fade_green = BACK_PI.get_PWM_dutycycle(g_pin)
+        fade_blue = BACK_PI.get_PWM_dutycycle(b_pin)
+        while cls.f_lights[light]:
             # dim green to zero
             if fade_green > 4 and dim_green:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(g_pin, fade_green - 5)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(g_pin, fade_green - 5)
                 else:
-                    front_pi.set_PWM_dutycycle(g_pin, fade_green - 5)
+                    FRONT_PI.set_PWM_dutycycle(g_pin, fade_green - 5)
                 fade_green -= 5
                 time.sleep(0.5)
                 continue
             else:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(g_pin, OFF)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(g_pin, OFF)
                 else:
-                    front_pi.set_PWM_dutycycle(g_pin, OFF)
+                    FRONT_PI.set_PWM_dutycycle(g_pin, OFF)
 
                 fade_green = 0
                 dim_green = 0
@@ -173,76 +168,76 @@ class LightControll(object):
 
             # dim blue to zero
             if fade_blue > 4 and dim_blue:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(b_pin, fade_green - 5)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(b_pin, fade_green - 5)
                 else:
-                    front_pi.set_PWM_dutycycle(b_pin, fade_green - 5)
+                    FRONT_PI.set_PWM_dutycycle(b_pin, fade_green - 5)
 
                 fade_blue -= 5
                 time.sleep(0.5)
                 continue
             else:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(b_pin, OFF)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(b_pin, OFF)
                 else:
-                    front_pi.set_PWM_dutycycle(b_pin, OFF)
+                    FRONT_PI.set_PWM_dutycycle(b_pin, OFF)
 
                 fade_blue = 0
                 dim_blue = 0
 
             # increase red to 255
             if fade_red < 251:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(r_pin, fade_red + 5)
-                elif light in front_pi_lights:
-                    front_pi.set_PWM_dutycycle(r_pin, fade_red + 5)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(r_pin, fade_red + 5)
+                elif light in FRONT_PI_LIGHTS:
+                    FRONT_PI.set_PWM_dutycycle(r_pin, fade_red + 5)
 
                 fade_red += 5
                 time.sleep(0.5)
                 continue
             else:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(r_pin, ON)
-                elif light in front_pi_lights:
-                    front_pi.set_PWM_dutycycle(r_pin, ON)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(r_pin, ON)
+                elif light in FRONT_PI_LIGHTS:
+                    FRONT_PI.set_PWM_dutycycle(r_pin, ON)
 
                 fade_red = ON
                 time.sleep(0.5)
 
             # increase green to 255
             if fade_green < 251:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(g_pin, fade_green + 5)
-                elif light in front_pi_lights:
-                    front_pi.set_PWM_dutycycle(g_pin, fade_green + 5)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(g_pin, fade_green + 5)
+                elif light in FRONT_PI_LIGHTS:
+                    FRONT_PI.set_PWM_dutycycle(g_pin, fade_green + 5)
 
                 fade_green += 5
                 time.sleep(0.5)
                 continue
             else:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(g_pin, ON)
-                elif light in front_pi_lights:
-                    front_pi.set_PWM_dutycycle(g_pin, ON)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(g_pin, ON)
+                elif light in FRONT_PI_LIGHTS:
+                    FRONT_PI.set_PWM_dutycycle(g_pin, ON)
 
                 fade_green = ON
                 time.sleep(0.5)
 
             # increase blue to 255
             if fade_blue < 251:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(b_pin, fade_blue + 5)
-                elif light in front_pi_lights:
-                    front_pi.set_PWM_dutycycle(b_pin, fade_blue + 5)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(b_pin, fade_blue + 5)
+                elif light in FRONT_PI_LIGHTS:
+                    FRONT_PI.set_PWM_dutycycle(b_pin, fade_blue + 5)
 
                 fade_blue += 5
                 time.sleep(0.5)
                 continue
             else:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(b_pin, ON)
-                elif light in front_pi_lights:
-                    front_pi.set_PWM_dutycycle(b_pin, ON)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(b_pin, ON)
+                elif light in FRONT_PI_LIGHTS:
+                    FRONT_PI.set_PWM_dutycycle(b_pin, ON)
 
                 fade_blue = ON
                 time.sleep(0.5)
@@ -250,63 +245,79 @@ class LightControll(object):
 
             # dim red to zero
             if fade_red > 4 and dim_red:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(r_pin, fade_red - 5)
-                elif light in front_pi_lights:
-                    front_pi.set_PWM_dutycycle(r_pin, fade_red - 5)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(r_pin, fade_red - 5)
+                elif light in FRONT_PI_LIGHTS:
+                    FRONT_PI.set_PWM_dutycycle(r_pin, fade_red - 5)
 
                 fade_red -= 5
                 time.sleep(0.5)
                 continue
             else:
-                if light in back_pi_lights:
-                    back_pi.set_PWM_dutycycle(r_pin, OFF)
-                elif light in front_pi_lights:
-                    front_pi.set_PWM_dutycycle(r_pin, OFF)
+                if light in BACK_PI_LIGHTS:
+                    BACK_PI.set_PWM_dutycycle(r_pin, OFF)
+                elif light in FRONT_PI_LIGHTS:
+                    FRONT_PI.set_PWM_dutycycle(r_pin, OFF)
 
                 fade_red = 0
                 time.sleep(0.5)
 
 
-    def fadeLights(self, **web_lights):
-        self.resolveLights(**web_lights)
+    def fade_lights(self, **web_lights):
+        """start fade for selected LED strips"""
+        self.resolve_lights(**web_lights)
         for light in self.lights:
-            setFade(light)
-        print("in fadeLights")
-        x = 5
+            self.set_fade(light)
+        print("in fade_lights")
         self.lights = {}
 
 
     @cherrypy.expose
-    def controlButtonClick(self, id, **web_lights):
-        print("id: {}\n".format(id))
-        if id in 'off':
+    def control_button_click(self, button_id, **web_lights):
+        """backend for buttons on webinterface - react on button click"""
+        print("button_id: {}\n".format(button_id))
+        if button_id in 'off':
             print("in off")
-            for light in back_pi_lights.values():
+            for light in BACK_PI_LIGHTS.values():
                 for pin in light:
                     print(pin)
-                    back_pi.set_PWM_dutycycle(int(pin), OFF)
-            for light in front_pi_lights.values():
+                    BACK_PI.set_PWM_dutycycle(int(pin), OFF)
+            for light in FRONT_PI_LIGHTS.values():
                 for pin in light:
                     print(pin)
-                    back_pi.set_PWM_dutycycle(int(pin), OFF)
+                    BACK_PI.set_PWM_dutycycle(int(pin), OFF)
 
-        if id in 'on':
-            initFade()
+        if button_id in 'on':
+            self.init_fade()
             print("in on")
-            for light in back_pi_lights.values():
+            for light in BACK_PI_LIGHTS.values():
                 for pin in light:
                     print(pin)
-                    back_pi.set_PWM_dutycycle(int(pin), ON)
-            for light in front_pi_lights.values():
+                    BACK_PI.set_PWM_dutycycle(int(pin), ON)
+            for light in FRONT_PI_LIGHTS.values():
                 for pin in light:
                     print(pin)
-                    front_pi.set_PWM_dutycycle(int(pin), ON)
+                    FRONT_PI.set_PWM_dutycycle(int(pin), ON)
 
-        if id in 'fade':
+        if button_id in 'fade':
             print("in fade")
             if web_lights:
-                self.fadeLights(**web_lights)
+                self.fade_lights(**web_lights)
+
+
+    def __init__(self):
+        self.init_fade()
+        for light in BACK_PI_LIGHTS.values():
+            print(light)
+            for pin in light:
+                print(pin)
+                BACK_PI.set_PWM_dutycycle(int(pin), OFF)
+        for light in FRONT_PI_LIGHTS.values():
+            print(light)
+            for pin in light:
+                print(pin)
+                FRONT_PI.set_PWM_dutycycle(int(pin), OFF)
+
 
 
 if __name__ == '__main__':

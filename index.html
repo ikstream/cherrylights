@@ -69,32 +69,32 @@
 			$(document).ready(function() {
 				$("#off").click(function(e) {
 					$.ajax({
-						url: "/controlButtonClick",
+						url: "/control_button_click",
 						type: "POST",
-						data: {id: "off"}
+						data: {button_id: "off"}
 					});
 				});
 				$("#on").click(function(e) {
 					$.ajax({
-						url: "/controlButtonClick",
+						url: "/control_button_click",
 						type: "POST",
-						data: {id: "on"}
+						data: {button_id: "on"}
 					});
 				});
 				$("#fade").click(function(e) {
 					$.ajax({
-						url: "/controlButtonClick",
+						url: "/control_button_click",
 						type: "POST",
-						data: { id: "fade",
+						data: { button_id: "fade",
 							web_lights: get_web_lights(0,0,0)
 						}
 					});
 				});
 				$("#jump").click(function(e) {
 					$.ajax({
-						url: "/controlButtonClick",
+						url: "/control_button_click",
 						type: "POST",
-						data: {id: "jump"}
+						data: {button_id: "jump"}
 					});
 				});
 
@@ -149,7 +149,7 @@
 			function set_color(r,g,b) {
 				var web_lights = get_web_lights(r, g, b);
 				$.ajax({
-					url: "/setLights",
+					url: "/set_lights",
 					type: "POST",
 					data: { red: r,
 						green: g,
