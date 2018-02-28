@@ -31,11 +31,11 @@
 import os
 import re
 import time
+import threading
 
 import pigpio
 import cherrypy
 from cherrypy.lib.static import serve_file
-
 
 PATH = os.path.abspath(os.path.dirname(__file__))
 CURDIR = os.getcwd()
@@ -142,9 +142,15 @@ class LightControll(object):
         """per LED strip fade function"""
         dim_green = 1
         dim_blue = 0
-        fade_red = BACK_PI.get_PWM_dutycycle(r_pin)
-        fade_green = BACK_PI.get_PWM_dutycycle(g_pin)
-        fade_blue = BACK_PI.get_PWM_dutycycle(b_pin)
+        if light in BACK_PI_LIGHTS:
+            fade_red = BACK_PI.get_PWM_dutycycle(r_pin)
+            fade_green = BACK_PI.get_PWM_dutycycle(g_pin)
+            fade_blue = BACK_PI.get_PWM_dutycycle(b_pin)
+        else:
+            fade_red = FRONT_PI.get_PWM_dutycycle(r_pin)
+            fade_green = FRONT_PI.get_PWM_dutycycle(g_pin)
+            fade_blue = FRONT_PI.get_PWM_dutycycle(b_pin)
+
         while cls.f_lights[light]:
             # dim green to zero
             if fade_green > 4 and dim_green:
@@ -155,7 +161,7 @@ class LightControll(object):
                 fade_green -= 5
                 time.sleep(0.5)
                 continue
-            else:
+            elif fade_green <= 4 and dim_green:
                 if light in BACK_PI_LIGHTS:
                     BACK_PI.set_PWM_dutycycle(g_pin, OFF)
                 else:
@@ -176,7 +182,7 @@ class LightControll(object):
                 fade_blue -= 5
                 time.sleep(0.5)
                 continue
-            else:
+            elif fade_blue <= 4 and dim_blue:
                 if light in BACK_PI_LIGHTS:
                     BACK_PI.set_PWM_dutycycle(b_pin, OFF)
                 else:
@@ -195,7 +201,7 @@ class LightControll(object):
                 fade_red += 5
                 time.sleep(0.5)
                 continue
-            else:
+            elif fade_red >= 251 and fade_red < 255:
                 if light in BACK_PI_LIGHTS:
                     BACK_PI.set_PWM_dutycycle(r_pin, ON)
                 elif light in FRONT_PI_LIGHTS:
@@ -214,7 +220,7 @@ class LightControll(object):
                 fade_green += 5
                 time.sleep(0.5)
                 continue
-            else:
+            elif fade_green >= 251 and fade_green < 255:
                 if light in BACK_PI_LIGHTS:
                     BACK_PI.set_PWM_dutycycle(g_pin, ON)
                 elif light in FRONT_PI_LIGHTS:
@@ -233,7 +239,7 @@ class LightControll(object):
                 fade_blue += 5
                 time.sleep(0.5)
                 continue
-            else:
+            elif fade_blue >= 251 and fade_blue < 255:
                 if light in BACK_PI_LIGHTS:
                     BACK_PI.set_PWM_dutycycle(b_pin, ON)
                 elif light in FRONT_PI_LIGHTS:
@@ -253,7 +259,7 @@ class LightControll(object):
                 fade_red -= 5
                 time.sleep(0.5)
                 continue
-            else:
+            elif fade_red <= 4 and dim_red:
                 if light in BACK_PI_LIGHTS:
                     BACK_PI.set_PWM_dutycycle(r_pin, OFF)
                 elif light in FRONT_PI_LIGHTS:
@@ -268,7 +274,17 @@ class LightControll(object):
         self.resolve_lights(**web_lights)
         for light in self.lights:
             self.set_fade(light)
-        print("in fade_lights")
+            if light in BACK_PI_LIGHTS:
+                fade_args = [BACK_PI_LIGHTS[light][R], BACK_PI_LIGHTS[light][G],
+                             BACK_PI_LIGHTS[light][B], light]
+                threading.Thread(target=self.fade_light, args=(fade_args,)).start()
+            else:
+                fade_args = [FRONT_PI_LIGHTS[light][R],
+                             FRONT_PI_LIGHTS[light][G], FRONT_PI_LIGHTS[light][B],
+                             light]
+                threading.Thread(target=self.fade_light, args=(fade_args,)).start()
+
+        print("in fadeLights")
         self.lights = {}
 
 
