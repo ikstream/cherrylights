@@ -135,8 +135,9 @@ class LightControll(object):
 
 
     # show website
+    @staticmethod
     @cherrypy.expose
-    def index(self):
+    def index():
         """serve HTML file"""
         return serve_file(os.path.join(PATH, 'index.html'))
 
@@ -164,6 +165,7 @@ class LightControll(object):
         """per LED strip fade function"""
         dim_green = 1
         dim_blue = 0
+        dim_red = 0
 
         control_pi = cls.resolve_pi(light)
         r_pin, g_pin, b_pin = cls.resolve_pins(light)
@@ -174,6 +176,11 @@ class LightControll(object):
 
         while cls.f_lights[light]:
             # dim green to zero
+            print("fade_red: {}, fade_green: {}, fade_blue: {}".format(fade_red,
+                                                                       fade_green,
+                                                                       fade_blue))
+            print("dim_red: {}, dim_green: {}, dim_blue: {}".format(dim_red, dim_green,
+                                                                    dim_blue))
             if fade_green > 4 and dim_green:
                 control_pi.set_PWM_dutycycle(g_pin, fade_green - 5)
 
@@ -202,39 +209,39 @@ class LightControll(object):
                 dim_blue = 0
 
             # increase red to 255
-            if fade_red < 251:
+            if fade_red < 250:
                 control_pi.set_PWM_dutycycle(r_pin, fade_red + 5)
 
                 fade_red += 5
                 time.sleep(0.5)
                 continue
-            elif fade_red >= 251 and fade_red < 255:
+            elif fade_red >= 250 and fade_red < 255:
                 control_pi.set_PWM_dutycycle(r_pin, ON)
 
                 fade_red = ON
                 time.sleep(0.5)
 
             # increase green to 255
-            if fade_green < 251:
+            if fade_green < 250:
                 control_pi.set_PWM_dutycycle(g_pin, fade_green + 5)
 
                 fade_green += 5
                 time.sleep(0.5)
                 continue
-            elif fade_green >= 251 and fade_green < 255:
+            elif fade_green >= 250 and fade_green < 255:
                 control_pi.set_PWM_dutycycle(g_pin, ON)
 
                 fade_green = ON
                 time.sleep(0.5)
 
             # increase blue to 255
-            if fade_blue < 251:
+            if fade_blue < 250:
                 control_pi.set_PWM_dutycycle(b_pin, fade_blue + 5)
 
                 fade_blue += 5
                 time.sleep(0.5)
                 continue
-            elif fade_blue >= 251 and fade_blue < 255:
+            elif fade_blue >= 250 and fade_blue < 255:
                 control_pi.set_PWM_dutycycle(b_pin, ON)
 
                 fade_blue = ON
@@ -261,10 +268,7 @@ class LightControll(object):
         print("in fadeLights")
         for light in self.lights:
             self.set_fade(light)
-            light_array = self.resolve_pi_lights(light)
-            fade_args = [light_array[light][R], light_array[light][G],
-                         light_array[light][B], light]
-            threading.Thread(target=self.fade_light, args=(fade_args,)).start()
+            threading.Thread(target=self.fade_light, args=(light,)).start()
         self.lights = {}
 
 
