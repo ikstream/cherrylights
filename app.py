@@ -70,7 +70,8 @@ FRONT_PI_LIGHTS = {
 FRONT_PI_IP = '192.168.0.6'
 BACK_PI = pigpio.pi()
 FRONT_PI = pigpio.pi(FRONT_PI_IP)
-
+FADE_TIME = 0.5
+STEP_SIZE = 5
 class LightControll(object):
     """Contains information and action about the light control"""
     lights = {}
@@ -163,9 +164,9 @@ class LightControll(object):
     @classmethod
     def fade_light(cls, light):
         """per LED strip fade function"""
-        dim_green = 1
-        dim_blue = 0
-        dim_red = 0
+        alter_green = -STEP_SIZE
+        alter_blue = 0
+        alter_red = 0
 
         control_pi = cls.resolve_pi(light)
         r_pin, g_pin, b_pin = cls.resolve_pins(light)
@@ -179,87 +180,82 @@ class LightControll(object):
             print("fade_red: {}, fade_green: {}, fade_blue: {}".format(fade_red,
                                                                        fade_green,
                                                                        fade_blue))
-            print("dim_red: {}, dim_green: {}, dim_blue: {}".format(dim_red, dim_green,
-                                                                    dim_blue))
-            if fade_green > 4 and dim_green:
-                control_pi.set_PWM_dutycycle(g_pin, fade_green - 5)
+            print("alter_red: {}, alter_green: {}, alter_blue: {}".format(alter_red,
+                                                                          alter_green,
+                                                                          alter_blue))
 
-                fade_green -= 5
-                time.sleep(0.5)
-                continue
-            elif fade_green <= 4 and dim_green:
-                control_pi.set_PWM_dutycycle(g_pin, OFF)
+            if alter_green:
+                if fade_green <= STEP_SIZE:
+                    """dim green to 0"""
+                    control_pi.set_PWM_dutycycle(g_pin, OFF)
+                    fade_green = OFF
+                    alter_green = OFF
+                    alter_blue = -STEP_SIZE
+                    time.sleep(FADE_TIME)
+                    continue
 
-                fade_green = 0
-                dim_green = 0
-                dim_blue = 1
-                time.sleep(0.5)
+                if fade_green >= (ON - STEP_SIZE):
+                    """set green to 255"""
+                    control_pi.set_PWM_dutycycle(g_pin, ON)
+                    fade_green = ON
+                    alter_green = OFF
+                    alter_blue = STEP_SIZE
+                    time.slee(FADE_TIME)
+                    continue
 
-            # dim blue to zero
-            if fade_blue > 4 and dim_blue:
-                control_pi.set_PWM_dutycycle(b_pin, fade_green - 5)
+                """change green by STEP_SIZE"""
+                control_pi.set_PWM_dutycycle(g_pin, fade_green + alter_green)
+                fade_green += alter_green
+                time.sleep(FADE_TIME)
 
-                fade_blue -= 5
-                time.sleep(0.5)
-                continue
-            elif fade_blue <= 4 and dim_blue:
-                control_pi.set_PWM_dutycycle(b_pin, OFF)
+            if alter_blue:
+                if fade_blue <= STEP_SIZE:
+                    """dim blue to 0"""
+                    control_pi.set_PWM_dutycycle(b_pin, OFF)
+                    fade_blue = OFF
+                    alter_blue = OFF
+                    alter_red = STEP_SIZE
+                    time.sleep(FADE_TIME)
+                    continue
 
-                fade_blue = 0
-                dim_blue = 0
+                if fade_blue >= (ON - STEP_SIZE):
+                    """set blue to 255"""
+                    control_pi.set_PWM_dutycycle(b_pin, ON)
+                    fade_blue = ON
+                    alter_blue = OFF
+                    alter_red = -STEP_SIZE
+                    time.sleep(FADE_TIME)
+                    continue
 
-            # increase red to 255
-            if fade_red < 250:
-                control_pi.set_PWM_dutycycle(r_pin, fade_red + 5)
+                """change green by STEP_SIZE"""
+                control_pi.set_PWM_dutycycle(b_pin, fade_blue + alter_blue)
+                fade_blue += alter_blue
+                time.sleep(FADE_TIME)
 
-                fade_red += 5
-                time.sleep(0.5)
-                continue
-            elif fade_red >= 250 and fade_red < 255:
-                control_pi.set_PWM_dutycycle(r_pin, ON)
+            if alter_red:
+                if fade_red <= STEP_SIZE:
+                    """dim red to 0"""
+                    control_pi.set_PWM_dutycycle(r_pin, OFF)
+                    fade_red = OFF
+                    alter_red = OFF
+                    alter_green = -STEP_SIZE
+                    time,sleep(FADE_TIME)
+                    continue
 
-                fade_red = ON
-                time.sleep(0.5)
+                if fade_red >= (ON - STEP_SIZE):
+                    """set red to 255"""
+                    control_pi.set_PWM_dutycycle(r_pin, ON)
+                    fade_red = ON
+                    alter_red =OFF
+                    alter_green = STEP_SIZE
+                    time.sleep(FADE_TIME)
+                    continue
 
-            # increase green to 255
-            if fade_green < 250:
-                control_pi.set_PWM_dutycycle(g_pin, fade_green + 5)
+                """change red by STEP_SIZE"""
+                control_pi.set_PWM_dutycycle(r_pin, fade_red + alter_red)
+                fade_red += alter_red
+                time.sleep(FADE_TIME)
 
-                fade_green += 5
-                time.sleep(0.5)
-                continue
-            elif fade_green >= 250 and fade_green < 255:
-                control_pi.set_PWM_dutycycle(g_pin, ON)
-
-                fade_green = ON
-                time.sleep(0.5)
-
-            # increase blue to 255
-            if fade_blue < 250:
-                control_pi.set_PWM_dutycycle(b_pin, fade_blue + 5)
-
-                fade_blue += 5
-                time.sleep(0.5)
-                continue
-            elif fade_blue >= 250 and fade_blue < 255:
-                control_pi.set_PWM_dutycycle(b_pin, ON)
-
-                fade_blue = ON
-                time.sleep(0.5)
-                dim_red = 1
-
-            # dim red to zero
-            if fade_red > 4 and dim_red:
-                control_pi.set_PWM_dutycycle(r_pin, fade_red - 5)
-
-                fade_red -= 5
-                time.sleep(0.5)
-                continue
-            elif fade_red <= 4 and dim_red:
-                control_pi.set_PWM_dutycycle(r_pin, OFF)
-
-                fade_red = 0
-                time.sleep(0.5)
 
 
     def fade_lights(self, **web_lights):
