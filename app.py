@@ -239,7 +239,7 @@ class LightControll(object):
                     fade_red = OFF
                     alter_red = OFF
                     alter_green = -STEP_SIZE
-                    time,sleep(FADE_TIME)
+                    time.sleep(FADE_TIME)
                     continue
 
                 if fade_red >= (ON - STEP_SIZE):
