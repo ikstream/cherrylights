@@ -195,7 +195,7 @@ class LightControll(object):
                     time.sleep(FADE_TIME)
                     continue
 
-                if fade_green >= (ON - STEP_SIZE):
+                if fade_green > (ON - STEP_SIZE):
                     # set green to 255
                     control_pi.set_PWM_dutycycle(g_pin, ON)
                     fade_green = ON
@@ -219,7 +219,7 @@ class LightControll(object):
                     time.sleep(FADE_TIME)
                     continue
 
-                if fade_blue >= (ON - STEP_SIZE):
+                if fade_blue > (ON - STEP_SIZE):
                     # set blue to 255
                     control_pi.set_PWM_dutycycle(b_pin, ON)
                     fade_blue = ON
@@ -243,7 +243,7 @@ class LightControll(object):
                     time.sleep(FADE_TIME)
                     continue
 
-                if fade_red >= (ON - STEP_SIZE):
+                if fade_red > (ON - STEP_SIZE):
                     # set red to 255
                     control_pi.set_PWM_dutycycle(r_pin, ON)
                     fade_red = ON
