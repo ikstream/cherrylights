@@ -185,8 +185,8 @@ class LightControll(object):
                                                                           alter_blue))
 
             if alter_green:
-                if fade_green <= STEP_SIZE:
-                    """dim green to 0"""
+                if fade_green < STEP_SIZE:
+                    # dim green to 0
                     control_pi.set_PWM_dutycycle(g_pin, OFF)
                     fade_green = OFF
                     alter_green = OFF
@@ -195,22 +195,22 @@ class LightControll(object):
                     continue
 
                 if fade_green >= (ON - STEP_SIZE):
-                    """set green to 255"""
+                    # set green to 255
                     control_pi.set_PWM_dutycycle(g_pin, ON)
                     fade_green = ON
                     alter_green = OFF
                     alter_blue = STEP_SIZE
-                    time.slee(FADE_TIME)
+                    time.sleep(FADE_TIME)
                     continue
 
-                """change green by STEP_SIZE"""
+                # change green by STEP_SIZE
                 control_pi.set_PWM_dutycycle(g_pin, fade_green + alter_green)
                 fade_green += alter_green
                 time.sleep(FADE_TIME)
 
             if alter_blue:
-                if fade_blue <= STEP_SIZE:
-                    """dim blue to 0"""
+                if fade_blue < STEP_SIZE:
+                    # dim blue to 0
                     control_pi.set_PWM_dutycycle(b_pin, OFF)
                     fade_blue = OFF
                     alter_blue = OFF
@@ -219,7 +219,7 @@ class LightControll(object):
                     continue
 
                 if fade_blue >= (ON - STEP_SIZE):
-                    """set blue to 255"""
+                    # set blue to 255
                     control_pi.set_PWM_dutycycle(b_pin, ON)
                     fade_blue = ON
                     alter_blue = OFF
@@ -227,14 +227,14 @@ class LightControll(object):
                     time.sleep(FADE_TIME)
                     continue
 
-                """change green by STEP_SIZE"""
+                # change green by STEP_SIZE
                 control_pi.set_PWM_dutycycle(b_pin, fade_blue + alter_blue)
                 fade_blue += alter_blue
                 time.sleep(FADE_TIME)
 
             if alter_red:
-                if fade_red <= STEP_SIZE:
-                    """dim red to 0"""
+                if fade_red < STEP_SIZE:
+                    # dim red to 0
                     control_pi.set_PWM_dutycycle(r_pin, OFF)
                     fade_red = OFF
                     alter_red = OFF
@@ -243,15 +243,15 @@ class LightControll(object):
                     continue
 
                 if fade_red >= (ON - STEP_SIZE):
-                    """set red to 255"""
+                    # set red to 255
                     control_pi.set_PWM_dutycycle(r_pin, ON)
                     fade_red = ON
-                    alter_red =OFF
+                    alter_red = OFF
                     alter_green = STEP_SIZE
                     time.sleep(FADE_TIME)
                     continue
 
-                """change red by STEP_SIZE"""
+                # change red by STEP_SIZE
                 control_pi.set_PWM_dutycycle(r_pin, fade_red + alter_red)
                 fade_red += alter_red
                 time.sleep(FADE_TIME)
