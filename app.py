@@ -272,6 +272,7 @@ class LightControll(object):
     def turn_pi_lights(state):
         """switch all lights on/off"""
         for light in BACK_PI_LIGHTS.values():
+            LightControll.unset_fade(light)
             print(light)
             if BACK_PI.connected:
                 for pin in light:
