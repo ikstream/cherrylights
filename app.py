@@ -177,12 +177,16 @@ class LightControll(object):
 
         while cls.f_lights[light]:
             # dim green to zero
-            print("fade_red: {}, fade_green: {}, fade_blue: {}".format(fade_red,
-                                                                       fade_green,
-                                                                       fade_blue))
-            print("alter_red: {}, alter_green: {}, alter_blue: {}".format(alter_red,
-                                                                          alter_green,
-                                                                          alter_blue))
+            print("fade_red: {}, fade_green: {}, fade_blue: {} light: {}".format(
+                fade_red,
+                fade_green,
+                fade_blue,
+                light))
+            print("alter_red: {}, alter_green: {}, alter_blue: {}, light: {}".format(
+                alter_red,
+                alter_green,
+                alter_blue,
+                light))
 
             if alter_green:
                 fade_green += alter_green
