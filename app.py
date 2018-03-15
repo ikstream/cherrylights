@@ -34,9 +34,9 @@ import time
 import threading
 import socket
 
-import pigpio
 import cherrypy
 from cherrypy.lib.static import serve_file
+import pigpio
 
 PATH = os.path.abspath(os.path.dirname(__file__))
 CURDIR = os.getcwd()
@@ -178,7 +178,7 @@ class LightControll(object):
 
         while cls.f_lights[light]:
             # dim green to zero
-            print("fade_red: {}, fade_green: {}, fade_blue: {} light: {}".format(
+            print("fade_red: {}, fade_green: {}, fade_blue: {}, light: {}".format(
                 fade_red,
                 fade_green,
                 fade_blue,
@@ -276,17 +276,17 @@ class LightControll(object):
     @staticmethod
     def turn_pi_lights(state):
         """switch all lights on/off"""
-        for light in BACK_PI_LIGHTS.values():
+        for light in BACK_PI_LIGHTS.keys():
             LightControll.unset_fade(light)
             print(light)
             if BACK_PI.connected:
-                for pin in light:
+                for pin in BACK_PI_LIGHTS[light]:
                     print(pin)
                     BACK_PI.set_PWM_dutycycle(int(pin), state)
-        for light in FRONT_PI_LIGHTS.values():
+        for light in FRONT_PI_LIGHTS.keys():
             print(light)
             if FRONT_PI.connected:
-                for pin in light:
+                for pin in FRONT_PI_LIGHTS[light]:
                     print(pin)
                     FRONT_PI.set_PWM_dutycycle(int(pin), state)
 
