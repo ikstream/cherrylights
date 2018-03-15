@@ -72,6 +72,7 @@ BACK_PI = pigpio.pi()
 FRONT_PI = pigpio.pi(FRONT_PI_IP)
 FADE_TIME = 0.5
 STEP_SIZE = 5
+LOWER_LIMIT = 80
 class LightControll(object):
     """Contains information and action about the light control"""
     lights = {}
@@ -238,7 +239,7 @@ class LightControll(object):
 
             if alter_red:
                 fade_red += alter_red
-                if fade_red < STEP_SIZE:
+                if fade_red < LOWER_LIMIT:
                     # dim red to 0
                     control_pi.set_PWM_dutycycle(r_pin, OFF)
                     fade_red = OFF
