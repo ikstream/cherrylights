@@ -177,18 +177,6 @@ class LightControll(object):
         fade_blue = control_pi.get_PWM_dutycycle(b_pin)
 
         while cls.f_lights[light]:
-            # dim green to zero
-            print("fade_red: {}, fade_green: {}, fade_blue: {}, light: {}".format(
-                fade_red,
-                fade_green,
-                fade_blue,
-                light))
-            print("alter_red: {}, alter_green: {}, alter_blue: {}, light: {}".format(
-                alter_red,
-                alter_green,
-                alter_blue,
-                light))
-
             if alter_green:
                 fade_green += alter_green
                 if fade_green < STEP_SIZE:
