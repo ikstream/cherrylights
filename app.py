@@ -264,14 +264,14 @@ class LightControll(object):
     @staticmethod
     def turn_pi_lights(state):
         """switch all lights on/off"""
-        for light in BACK_PI_LIGHTS.keys():
+        for light in BACK_PI_LIGHTS:
             LightControll.unset_fade(light)
             print(light)
             if BACK_PI.connected:
                 for pin in BACK_PI_LIGHTS[light]:
                     print(pin)
                     BACK_PI.set_PWM_dutycycle(int(pin), state)
-        for light in FRONT_PI_LIGHTS.keys():
+        for light in FRONT_PI_LIGHTS:
             print(light)
             if FRONT_PI.connected:
                 for pin in FRONT_PI_LIGHTS[light]:
