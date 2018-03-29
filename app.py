@@ -67,12 +67,12 @@ FRONT_PI_LIGHTS = {
 }
 
 
-FRONT_PI_IP = '192.168.0.6'
+FRONT_PI_IP = '192.168.2.221'
 BACK_PI = pigpio.pi()
 FRONT_PI = pigpio.pi(FRONT_PI_IP)
-FADE_TIME = 0.5
-STEP_SIZE = 5
-LOWER_LIMIT = 80
+FADE_TIME = 0.1
+STEP_SIZE = 1
+LOWER_LIMIT = 5
 class LightControll(object):
     """Contains information and action about the light control"""
     lights = {}
@@ -179,10 +179,10 @@ class LightControll(object):
         while cls.f_lights[light]:
             if alter_green:
                 fade_green += alter_green
-                if fade_green < STEP_SIZE:
+                if fade_green < LOWER_LIMIT:
                     # dim green to 0
-                    control_pi.set_PWM_dutycycle(g_pin, OFF)
-                    fade_green = OFF
+                    control_pi.set_PWM_dutycycle(g_pin, LOWER_LIMIT)
+                    fade_green = LOWER_LIMIT
                     alter_green = OFF
                     alter_blue = -STEP_SIZE
                     time.sleep(FADE_TIME)
@@ -203,10 +203,10 @@ class LightControll(object):
 
             if alter_blue:
                 fade_blue += alter_blue
-                if fade_blue < STEP_SIZE:
+                if fade_blue < LOWER_LIMIT:
                     # dim blue to 0
-                    control_pi.set_PWM_dutycycle(b_pin, OFF)
-                    fade_blue = OFF
+                    control_pi.set_PWM_dutycycle(b_pin, LOWER_LIMIT)
+                    fade_blue = LOWER_LIMIT
                     alter_blue = OFF
                     alter_red = STEP_SIZE
                     time.sleep(FADE_TIME)
@@ -229,8 +229,8 @@ class LightControll(object):
                 fade_red += alter_red
                 if fade_red < LOWER_LIMIT:
                     # dim red to 0
-                    control_pi.set_PWM_dutycycle(r_pin, OFF)
-                    fade_red = OFF
+                    control_pi.set_PWM_dutycycle(r_pin, fade_red)
+                    fade_red = LOWER_LIMIT
                     alter_red = OFF
                     alter_green = -STEP_SIZE
                     time.sleep(FADE_TIME)
