@@ -40,7 +40,6 @@ class LightControl(object):
     """
     Contains information and action about the light control
     """
-    lights = {}
 
     f_lights = {'ub' : 0,
                 'lb' : 0,
@@ -51,9 +50,11 @@ class LightControl(object):
                }
 
     def __init__(self, path):
+        self.__lights = dict()
         self.__config = configparser.ConfigParser()
         self.__content = self.__config.read(path)
-        self.init_fade()
+        self.__pi_ip = self.get_addresses_from_config()
+        self.disable_fade()
         #self.turn_pi_lights(OFF)
 
 
@@ -66,10 +67,9 @@ class LightControl(object):
 
     def get_addresses_from_config(self):
         """
-        return ip addresses used as sections in config
+        Get IP addresses used as sections in config
 
-        @type config configparser.ConfigParser
-        @param config configuration to read from
+        :return (list): list of IP addresses from config
         """
         return self.__config.sections()
 
@@ -78,6 +78,10 @@ class LightControl(object):
         """
         return the names used for lights in config file
         these names have to be unique
+
+        :param: ip (string): ip address of the pi to handle
+
+        return (list): list of light names
         """
         return [light for light in self.__config[ip]]
 
@@ -85,48 +89,57 @@ class LightControl(object):
     def get_light_pins_from_config(self, ip, light):
         """
         retrieve lights as keys value pairs
-        returns a dictionary
+
+        :param: ip (string): IP address of the pi to handle
+        :param: light (string): name of light to get pins from
+
+        return (dictionary): dictionary with light names as key and
+                             pins as value
         """
         return self.__config[ip][light].split(',')
 
 
     # fade functions
-    def init_fade(self):
+    def disable_fade(self):
         """
         initialize all lights not to fade
         """
         self.f_lights = {f_light: 0 for f_light in self.f_lights}
 
 
-    @classmethod
     def set_fade(self, light):
         """
         set light to fade
+
+        :param: light (string): light to activate
         """
         self.f_lights[light] = 1
 
 
-    @classmethod
     def unset_fade(self, light):
         """
         set light not to fade
+
+        :param light (string): light to deactivate
         """
         self.f_lights[light] = 0
 
 
-    @staticmethod
-    def resolve_pi(light):
+    def resolve_pi(self, light):
         """
-        return pi to use
+        Get pi to use
+
+        :param: light (string): light to check
+
+        :return (string): IP of pi controlling the light
         """
-        if light in BACK_PI_LIGHTS:
-            return BACK_PI
 
-        return FRONT_PI
+        for ip in self.__pi_ip:
+            if light in self.get_light_names(ip):
+                return ip
 
 
-    @staticmethod
-    def resolve_pi_lights(light):
+    def resolve_pi_lights(self, light):
         """
         return light array to use
         """
@@ -135,7 +148,7 @@ class LightControl(object):
 
         return FRONT_PI_LIGHTS
 
-    @classmethod
+
     def resolve_pins(self, light):
         """
         return the pin numbers for a given light
@@ -143,13 +156,14 @@ class LightControl(object):
         c_light = self.resolve_pi_lights(light)
         return c_light[light]
 
-    # set lights to use
+
+# set lights to use
     def resolve_lights(self, **web_lights):
         """
         set LED strips to work on
         """
         for key in web_lights:
-            self.lights[re.search(r'\[(.*?)\]', key).group(1)] = web_lights[key]
+            self.__lights[re.search(r'\[(.*?)\]', key).group(1)] = web_lights[key]
         print("weblights {}".format(web_lights))
         print("lights: {}".format(self.lights))
 
