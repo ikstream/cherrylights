@@ -66,9 +66,6 @@ FRONT_PI_LIGHTS = {
 }
 
 
-FRONT_PI_IP = '192.168.2.221'
-BACK_PI = pigpio.pi()
-FRONT_PI = pigpio.pi(FRONT_PI_IP)
 FADE_TIME = 0.1
 STEP_SIZE = 1
 LOWER_LIMIT = 5
