@@ -59,6 +59,7 @@ class LightControl(object):
         self.__pi_ip = self.get_addresses_from_config()
         self.__lower_limit = 5
         self.__upper_limit = 255
+        self.__fade_time = 0.1
         self.disable_fade()
         #self.turn_pi_lights(OFF)
 
@@ -138,6 +139,24 @@ class LightControl(object):
         self.__upper_limit = limit
 
 
+    def get_fade_time(self):
+        """
+        get time waited between value changes in seconds
+
+        :return (int): time between two value changes in seconds
+        """
+        return self.__fade_time
+
+
+    def set_fade_time(self, fade_time):
+        """
+        set time waited between value changes in seconds
+
+        :param fade_time (int): time between two value changes in seconds
+        """
+        self.__fade_time = fade_time
+
+
     def disable_fade(self):
         """
         initialize all lights not to fade
@@ -211,7 +230,7 @@ class LightControl(object):
                     fade_green = self.__lower_limit
                     alter_green = OFF
                     alter_blue = -STEP_SIZE
-                    time.sleep(FADE_TIME)
+                    time.sleep(self.__fade_time)
                     continue
 
                 if fade_green > (self.__upper_limit - STEP_SIZE):
@@ -220,12 +239,12 @@ class LightControl(object):
                     fade_green = self.__upper_limit
                     alter_green = OFF
                     alter_blue = STEP_SIZE
-                    time.sleep(FADE_TIME)
+                    time.sleep(self.__fade_time)
                     continue
 
                 # change green by STEP_SIZE
                 control_pi.set_PWM_dutycycle(g_pin, fade_green)
-                time.sleep(FADE_TIME)
+                time.sleep(self.__fade_time)
 
             if alter_blue:
                 fade_blue += alter_blue
@@ -235,7 +254,7 @@ class LightControl(object):
                     fade_blue = self.__lower_limit
                     alter_blue = OFF
                     alter_red = STEP_SIZE
-                    time.sleep(FADE_TIME)
+                    time.sleep(self.__fade_time)
                     continue
 
                 if fade_blue > (self.__upper_limit - STEP_SIZE):
@@ -244,12 +263,12 @@ class LightControl(object):
                     fade_blue = self.__upper_limit
                     alter_blue = OFF
                     alter_red = -STEP_SIZE
-                    time.sleep(FADE_TIME)
+                    time.sleep(self.__fade_time)
                     continue
 
                 # change green by STEP_SIZE
                 control_pi.set_PWM_dutycycle(b_pin, fade_blue)
-                time.sleep(FADE_TIME)
+                time.sleep(self.__fade_time)
 
             if alter_red:
                 fade_red += alter_red
@@ -259,7 +278,7 @@ class LightControl(object):
                     fade_red = self.__lower_limit
                     alter_red = OFF
                     alter_green = -STEP_SIZE
-                    time.sleep(FADE_TIME)
+                    time.sleep(self.__fade_time)
                     continue
 
                 if fade_red > (self.__upper_limit - STEP_SIZE):
@@ -268,12 +287,12 @@ class LightControl(object):
                     fade_red = self.__upper_limit
                     alter_red = OFF
                     alter_green = STEP_SIZE
-                    time.sleep(FADE_TIME)
+                    time.sleep(self.__fade_time)
                     continue
 
                 # change red by STEP_SIZE
                 control_pi.set_PWM_dutycycle(r_pin, fade_red)
-                time.sleep(FADE_TIME)
+                time.sleep(self.__fade_time)
 
 
 
