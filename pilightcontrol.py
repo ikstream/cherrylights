@@ -39,6 +39,9 @@ import pigpio
 ON = 1
 OFF = 0
 
+PWM_MAX = 255
+PWM_MIN = 0
+
 class LightControl(object):
     """
     Contains information and action about the light control
@@ -118,7 +121,7 @@ class LightControl(object):
 
         :param limit (int): lower limit for pwm
         """
-        self.__lower_limit = limit
+        self.__lower_limit = limit if limit >= PWM_MIN else PWM_MIN
 
 
     def get_upper_limit(self):
@@ -136,7 +139,7 @@ class LightControl(object):
 
         :param limit (int): upper limit for pwm
         """
-        self.__upper_limit = limit
+        self.__upper_limit = limit if limit <= PWM_MAX else PWM_MAX
 
 
     def get_fade_time(self):
