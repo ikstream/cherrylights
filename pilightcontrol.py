@@ -34,6 +34,8 @@ import time
 import threading
 import socket
 
+from recordtype import recordtype
+
 import pigpio
 
 ON = 1
@@ -44,6 +46,13 @@ PWM_MIN = 0
 
 STEP_MIN = 0
 STEP_MAX = 255
+
+RED = 0
+GREEN = 1
+BLUE = 2
+
+DECR = -1
+INCR = 1
 
 class LightControl(object):
     """
@@ -235,15 +244,14 @@ class LightControl(object):
         print("lights: {}".format(self.lights))
 
 
-    # fade light
-    def fade_light(self, light):
+    def get_pin_values(self, light):
         """
-        per LED strip fade function
-        """
-        alter_green = -self.__step_size
-        alter_blue = 0
-        alter_red = 0
+        retrieve values of light pins
 
+        :param light (string): light to check pin values on
+
+        :return (list): values of r/g/b pins
+        """
         control_pi = self.resolve_pi(light)
         r_pin, g_pin, b_pin = self.get_light_pins_from_config(control_pi, light)
 
@@ -251,79 +259,72 @@ class LightControl(object):
         fade_green = control_pi.get_PWM_dutycycle(g_pin)
         fade_blue = control_pi.get_PWM_dutycycle(b_pin)
 
+        return [fade_red, fade_green, fade_blue]
+
+
+
+    def __adjust_color(self, color, direction, ip, pin):
+        """
+        Adjust colors during fade
+
+        :param color (Color/recordtype): color to change
+        :param direction (int): increase (1) or reduce (-1)
+        :param ip (string): ip of pi to change light
+        :param pin (int): pin to change
+
+        :return (Color/recordtype) update color information
+        """
+        color.color_value += direction * color.alter_color
+        value = color.color_value
+
+        if color.color_value < self.__lower_limit:
+            #dim color to zero
+            value = self.__lower_limit
+            color.color_value = self.__lower_limit
+            color.alter_color = OFF
+            color.change_next = -1
+
+        if color.color_value > (self.__upper_limit - self.__lower_limit):
+            #set color to 255
+            value = self.__upper_limit
+            color.color_value = self.__upper_limit
+            color.alter_color = OFF
+            color.change_next = 1
+
+        ip.set_PWM_dutycycle(pin, value)
+        return color
+
+
+    # fade light
+    def fade_light(self, light):
+        """
+        per LED strip fade function
+
+        :param light (string): light to fade
+        """
+        color = recordtype('Color', ['alter_color', 'color_value',
+                                     'change_next'])
+
+        ip = self.resolve_pi(light)
+        r_pin, g_pin, b_pin = self.get_light_pins_from_config(ip, light)
+        pin_values = self.get_pin_values(light)
+        red = color(0, pin_values[RED], DECR)
+        green = color(self.__step_size, pin_values[GREEN], 0)
+        blue = color(0, pin_values[BLUE], 0)
+
+
         while self.f_lights[light]:
-            if alter_green:
-                fade_green += alter_green
-                if fade_green < self.__lower_limit:
-                    # dim green to 0
-                    control_pi.set_PWM_dutycycle(g_pin, self.__lower_limit)
-                    fade_green = self.__lower_limit
-                    alter_green = OFF
-                    alter_blue = -self.__step_size
-                    time.sleep(self.__fade_time)
-                    continue
-
-                if fade_green > (self.__upper_limit - self.__step_size):
-                    # set green to 255
-                    control_pi.set_PWM_dutycycle(g_pin, self.__upper_limit)
-                    fade_green = self.__upper_limit
-                    alter_green = OFF
-                    alter_blue = self.__step_size
-                    time.sleep(self.__fade_time)
-                    continue
-
-                # change green by self.__step_size
-                control_pi.set_PWM_dutycycle(g_pin, fade_green)
+            if red.change_next:
+                green = self.__adjust_color(green, red.change_next, ip, g_pin)
                 time.sleep(self.__fade_time)
 
-            if alter_blue:
-                fade_blue += alter_blue
-                if fade_blue < self.__lower_limit:
-                    # dim blue to 0
-                    control_pi.set_PWM_dutycycle(b_pin, self.__lower_limit)
-                    fade_blue = self.__lower_limit
-                    alter_blue = OFF
-                    alter_red = self.__step_size
-                    time.sleep(self.__fade_time)
-                    continue
-
-                if fade_blue > (self.__upper_limit - self.__step_size):
-                    # set blue to 255
-                    control_pi.set_PWM_dutycycle(b_pin, self.__upper_limit)
-                    fade_blue = self.__upper_limit
-                    alter_blue = OFF
-                    alter_red = -self.__step_size
-                    time.sleep(self.__fade_time)
-                    continue
-
-                # change green by self.__step_size
-                control_pi.set_PWM_dutycycle(b_pin, fade_blue)
+            if green.change_next:
+                blue = self.__adjust_color(blue, green.change_next, ip, b_pin)
                 time.sleep(self.__fade_time)
 
-            if alter_red:
-                fade_red += alter_red
-                if fade_red < self.__lower_limit:
-                    # dim red to 0
-                    control_pi.set_PWM_dutycycle(r_pin, fade_red)
-                    fade_red = self.__lower_limit
-                    alter_red = OFF
-                    alter_green = -self.__step_size
-                    time.sleep(self.__fade_time)
-                    continue
-
-                if fade_red > (self.__upper_limit - self.__step_size):
-                    # set red to 255
-                    control_pi.set_PWM_dutycycle(r_pin, self.__upper_limit)
-                    fade_red = self.__upper_limit
-                    alter_red = OFF
-                    alter_green = self.__step_size
-                    time.sleep(self.__fade_time)
-                    continue
-
-                # change red by self.__step_size
-                control_pi.set_PWM_dutycycle(r_pin, fade_red)
+            if blue.change_next:
+                red = self.__adjust_color(red, blue.change_next, ip, r_pin)
                 time.sleep(self.__fade_time)
-
 
 
     def fade_lights(self, **web_lights):
@@ -332,10 +333,10 @@ class LightControl(object):
         """
         self.resolve_lights(**web_lights)
         print("in fadeLights")
-        for light in self.lights:
+        for light in self.__lights:
             self.set_fade(light)
             threading.Thread(target=self.fade_light, args=(light,)).start()
-        self.lights = {}
+        self.__lights = {}
 
 
     def turn_pi_lights(state):
