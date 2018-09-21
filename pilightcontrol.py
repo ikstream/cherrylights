@@ -36,6 +36,9 @@ import socket
 
 import pigpio
 
+ON = 1
+OFF = 0
+
 class LightControl(object):
     """
     Contains information and action about the light control
@@ -93,8 +96,7 @@ class LightControl(object):
         :param: ip (string): IP address of the pi to handle
         :param: light (string): name of light to get pins from
 
-        return (dictionary): dictionary with light names as key and
-                             pins as value
+        return (list): list with pins of lights
         """
         return self.__config[ip][light].split(',')
 
@@ -133,31 +135,11 @@ class LightControl(object):
 
         :return (string): IP of pi controlling the light
         """
-
         for ip in self.__pi_ip:
             if light in self.get_light_names(ip):
                 return ip
 
 
-    def resolve_pi_lights(self, light):
-        """
-        return light array to use
-        """
-        if light in BACK_PI_LIGHTS:
-            return BACK_PI_LIGHTS
-
-        return FRONT_PI_LIGHTS
-
-
-    def resolve_pins(self, light):
-        """
-        return the pin numbers for a given light
-        """
-        c_light = self.resolve_pi_lights(light)
-        return c_light[light]
-
-
-# set lights to use
     def resolve_lights(self, **web_lights):
         """
         set LED strips to work on
@@ -169,7 +151,6 @@ class LightControl(object):
 
 
     # fade light
-    @classmethod
     def fade_light(self, light):
         """
         per LED strip fade function
@@ -179,7 +160,7 @@ class LightControl(object):
         alter_red = 0
 
         control_pi = self.resolve_pi(light)
-        r_pin, g_pin, b_pin = self.resolve_pins(light)
+        r_pin, g_pin, b_pin = self.get_light_pins_from_config(control_pi, light)
 
         fade_red = control_pi.get_PWM_dutycycle(r_pin)
         fade_green = control_pi.get_PWM_dutycycle(g_pin)
@@ -272,7 +253,6 @@ class LightControl(object):
         self.lights = {}
 
 
-    @staticmethod
     def turn_pi_lights(state):
         """
         switch all lights on/off
