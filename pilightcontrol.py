@@ -237,11 +237,11 @@ class LightControl(object):
     def resolve_lights(self, **web_lights):
         """
         set LED strips to work on
+
+        :param web_lights (dict): lights to work on, contains all set lights
         """
         for key in web_lights:
             self.__lights[re.search(r'\[(.*?)\]', key).group(1)] = web_lights[key]
-        print("weblights {}".format(web_lights))
-        print("lights: {}".format(self.lights))
 
 
     def get_pin_values(self, light):
