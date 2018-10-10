@@ -37,6 +37,8 @@ import socket
 import cherrypy
 from cherrypy.lib.static import serve_file
 
+import pilightcontrol as pLC
+
 PATH = os.path.abspath(os.path.dirname(__file__))
 CURDIR = os.getcwd()
 
@@ -53,17 +55,17 @@ R = 0
 G = 1
 B = 2
 
-BACK_PI_LIGHTS = {
-    'ub' : [13, 19, 26],
-    'lb' : [16, 20, 21]
-}
-
-FRONT_PI_LIGHTS = {
-    'ur' : [18, 23, 24],
-    'lr' : [16, 20, 21],
-    'ul' : [17, 27, 22],
-    'll' : [13, 19, 26]
-}
+#BACK_PI_LIGHTS = { 192.168.2.203
+#    'ub' : [13, 19, 26],
+#    'lb' : [16, 20, 21]
+#}
+#
+#FRONT_PI_LIGHTS = { 192.168.2.221
+#    'ur' : [18, 23, 24],
+#    'lr' : [16, 20, 21],
+#    'ul' : [17, 27, 22],
+#    'll' : [13, 19, 26]
+#}
 
 
 FADE_TIME = 0.1
@@ -71,7 +73,7 @@ STEP_SIZE = 1
 LOWER_LIMIT = 5
 
 class Root:
-    pLC = LightControl()
+    pLC = pLC.LightControl("light.config")
 
     @cherrypy.expose
     def control_button_click(self, button_id, **web_lights):
@@ -79,12 +81,12 @@ class Root:
         print("button_id: {}\n".format(button_id))
         if button_id in 'off':
             print("in off")
-            self.pLC.turn_pi_lights(OFF)
+            self.pLC.change_lights_state(OFF)
 
         if button_id in 'on':
-            self.pLC.init_fade()
+            self.pLC.disable_fade()
             print("in on")
-            self.pLC.turn_pi_lights(ON)
+            self.pLC.change_lights_state(ON)
 
         if button_id in 'fade':
             print("in fade")
@@ -114,7 +116,6 @@ class Root:
             control_pi.set_PWM_dutycycle(int(c_light[light][G]), green)
             control_pi.set_PWM_dutycycle(int(c_light[light][B]), blue)
 
-        self.lights = {}
 
 
 if __name__ == '__main__':
