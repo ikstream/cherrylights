@@ -67,23 +67,28 @@ class LightControl():
 
     def __init__(self, path):
         self.__lights = dict()
-        self.__config = configparser.ConfigParser()
-        self.__content = self.__config.read(path)
+        self._config = self._get_config(path)
         self.__pi_ip = self.get_addresses_from_config()
         self._print_pi_states(self.__pi_ip)
         self.__lower_limit = 5
         self.__upper_limit = 255
         self.__fade_time = 0.1
         self.__step_size = 1
+        self.__path = path
         self.disable_fade()
         #self.turn_pi_lights(OFF)
 
 
-    def _get_config(self):
+    def _get_config(self, path):
         """
-        return config_content to user
+        :param path (string): path to config file
+
+        return (class 'configparser.ConfigParser): config to use
         """
-        return self.__config
+        config = configparser.ConfigParser()
+        config.read(path)
+
+        return config
 
 
     def get_addresses_from_config(self):
@@ -92,7 +97,7 @@ class LightControl():
 
         :return (list): list of IP addresses from config
         """
-        return self.__config.sections()
+        return self._config.sections()
 
 
     def _print_pi_states(self, pi_ips):
@@ -117,7 +122,7 @@ class LightControl():
 
         return (list): list of light names
         """
-        return [light for light in self.__config[c_ip]]
+        return [light for light in self._get_config(self.__path)[c_ip]]
 
 
     def get_light_pins_from_config(self, c_ip, light):
@@ -129,7 +134,7 @@ class LightControl():
 
         return (list): list with pins of lights
         """
-        return self.__config[c_ip][light].split(',')
+        return self._config[c_ip][light].split(',')
 
 
     def get_lower_limit(self):
