@@ -314,7 +314,10 @@ class LightControl():
         """
         c_pi_ip = self.__c_pi_dict[c_ip]
         if pi_is_connected(c_pi_ip):
-            c_pi_ip.set_PWM_dutycycle(pin, value)
+            try:
+                c_pi_ip.set_PWM_dutycycle(pin, value)
+            except:
+                print("Something went wrong setting duty cycle of {}".format(c_ip))
         else:
             print("{} is not connected".format(c_ip))
 
