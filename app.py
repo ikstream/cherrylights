@@ -66,6 +66,8 @@ FRONT_PI_LIGHTS = {
     'll' : [13, 19, 26]
 }
 
+SUCCESS = 0
+FAILURE = 1
 
 FRONT_PI_IP = '192.168.2.221'
 BACK_PI = pigpio.pi()
@@ -73,6 +75,15 @@ FRONT_PI = pigpio.pi(FRONT_PI_IP)
 FADE_TIME = 0.1
 STEP_SIZE = 1
 LOWER_LIMIT = 5
+
+def set_pwm(pi, pin, val):
+    """ set pwm value of pin if pi is connected"""
+    if pi.connected:
+        pi.set_PWM_dutycycle(pin, val)
+        return SUCCESS
+
+    return FAILURE
+
 class LightControll(object):
     """Contains information and action about the light control"""
     lights = {}
@@ -121,6 +132,7 @@ class LightControll(object):
 
         return FRONT_PI_LIGHTS
 
+
     @classmethod
     def resolve_pins(cls, light):
         """return the pin numbers for a given light"""
@@ -154,9 +166,9 @@ class LightControll(object):
             control_pi = self.resolve_pi(light)
             c_light = self.resolve_pi_lights(light)
             print("light: {}: {}\n".format(light, self.lights[light]))
-            control_pi.set_PWM_dutycycle(int(c_light[light][R]), red)
-            control_pi.set_PWM_dutycycle(int(c_light[light][G]), green)
-            control_pi.set_PWM_dutycycle(int(c_light[light][B]), blue)
+            set_pwm(control_pi, int(c_light[light][R]), red)
+            set_pwm(control_pi, int(c_light[light][G]), green)
+            set_pwm(control_pi, int(c_light[light][B]), blue)
 
         self.lights = {}
 
@@ -181,7 +193,7 @@ class LightControll(object):
                 fade_green += alter_green
                 if fade_green < LOWER_LIMIT:
                     # dim green to 0
-                    control_pi.set_PWM_dutycycle(g_pin, LOWER_LIMIT)
+                    set_pwm(control_pi, g_pin, LOWER_LIMIT)
                     fade_green = LOWER_LIMIT
                     alter_green = OFF
                     alter_blue = -STEP_SIZE
@@ -190,7 +202,7 @@ class LightControll(object):
 
                 if fade_green > (ON - STEP_SIZE):
                     # set green to 255
-                    control_pi.set_PWM_dutycycle(g_pin, ON)
+                    set_pwm(control_pi, g_pin, ON)
                     fade_green = ON
                     alter_green = OFF
                     alter_blue = STEP_SIZE
@@ -198,14 +210,14 @@ class LightControll(object):
                     continue
 
                 # change green by STEP_SIZE
-                control_pi.set_PWM_dutycycle(g_pin, fade_green)
+                set_pwm(control_pi, g_pin, fade_green)
                 time.sleep(FADE_TIME)
 
             if alter_blue:
                 fade_blue += alter_blue
                 if fade_blue < LOWER_LIMIT:
                     # dim blue to 0
-                    control_pi.set_PWM_dutycycle(b_pin, LOWER_LIMIT)
+                    set_pwm(control_pi, b_pin, LOWER_LIMIT)
                     fade_blue = LOWER_LIMIT
                     alter_blue = OFF
                     alter_red = STEP_SIZE
@@ -214,7 +226,7 @@ class LightControll(object):
 
                 if fade_blue > (ON - STEP_SIZE):
                     # set blue to 255
-                    control_pi.set_PWM_dutycycle(b_pin, ON)
+                    set_pwm(control_pi, b_pin, ON)
                     fade_blue = ON
                     alter_blue = OFF
                     alter_red = -STEP_SIZE
@@ -222,14 +234,14 @@ class LightControll(object):
                     continue
 
                 # change green by STEP_SIZE
-                control_pi.set_PWM_dutycycle(b_pin, fade_blue)
+                set_pwm(control_pi, b_pin, fade_blue)
                 time.sleep(FADE_TIME)
 
             if alter_red:
                 fade_red += alter_red
                 if fade_red < LOWER_LIMIT:
                     # dim red to 0
-                    control_pi.set_PWM_dutycycle(r_pin, fade_red)
+                    set_pwm(control_pi, r_pin, fade_red)
                     fade_red = LOWER_LIMIT
                     alter_red = OFF
                     alter_green = -STEP_SIZE
@@ -238,7 +250,7 @@ class LightControll(object):
 
                 if fade_red > (ON - STEP_SIZE):
                     # set red to 255
-                    control_pi.set_PWM_dutycycle(r_pin, ON)
+                    set_pwm(control_pi, r_pin, ON)
                     fade_red = ON
                     alter_red = OFF
                     alter_green = STEP_SIZE
@@ -246,7 +258,7 @@ class LightControll(object):
                     continue
 
                 # change red by STEP_SIZE
-                control_pi.set_PWM_dutycycle(r_pin, fade_red)
+                set_pwm(control_pi, r_pin, fade_red)
                 time.sleep(FADE_TIME)
 
 
@@ -270,13 +282,13 @@ class LightControll(object):
             if BACK_PI.connected:
                 for pin in BACK_PI_LIGHTS[light]:
                     print(pin)
-                    BACK_PI.set_PWM_dutycycle(int(pin), state)
+                    set_pwm(BACK_PI, int(pin), state)
         for light in FRONT_PI_LIGHTS:
             print(light)
             if FRONT_PI.connected:
                 for pin in FRONT_PI_LIGHTS[light]:
                     print(pin)
-                    FRONT_PI.set_PWM_dutycycle(int(pin), state)
+                    set_pwm(FRONT_PI, int(pin), state)
 
 
     @cherrypy.expose
