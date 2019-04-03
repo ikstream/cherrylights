@@ -76,6 +76,8 @@ FADE_TIME = 0.1
 STEP_SIZE = 1
 LOWER_LIMIT = 5
 
+VERSION = "0.1.1"
+
 def set_pwm(pi, pin, val):
     """ set pwm value of pin if pi is connected"""
     if pi.connected:
@@ -317,4 +319,5 @@ class LightControll(object):
 
 
 if __name__ == '__main__':
+    print("You are using Verison {}".format(VERSION))
     cherrypy.quickstart(LightControll(), '/')
