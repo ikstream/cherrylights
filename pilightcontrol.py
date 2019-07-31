@@ -52,6 +52,19 @@ BLUE = 2
 DECR = -1
 INCR = 1
 
+def print_pi_states(pi_ips):
+    """
+    print connection state of all ips in config
+
+    :param pi_ips (list): list of ips from config
+    """
+    for c_pi in pi_ips:
+        if c_pi.connected:
+            print("{} is connected".format(c_pi))
+        else:
+            print("{} is not connected".format(c_pi))
+
+
 class LightControl():
     """
     Contains information and action about the light control
@@ -67,9 +80,10 @@ class LightControl():
 
     def __init__(self, path):
         self.__lights = dict()
+        self.__cpis = list()
         self._config = self._get_config(path)
         self.__pi_ip = self.get_addresses_from_config()
-        self._print_pi_states(self.__pi_ip)
+        print_pi_states(self.__pi_ip)
         self.__lower_limit = 5
         self.__upper_limit = 255
         self.__fade_time = 0.1
@@ -100,17 +114,16 @@ class LightControl():
         return self._config.sections()
 
 
-    def _print_pi_states(self, pi_ips):
+    def init_control_pis(self, pis):
         """
-        print connection state of all ips in config
+        Initiate Pis by ip
 
-        :param pi_ips (list): list of ips from config
+        :param: pis (list): lists of ips
+
+        :return (list): list of pigpio pis
         """
-        for c_pi in pi_ips:
-            if c_pi.connected:
-                print("{} is connected".format(c_pi))
-            else:
-                print("{} is not connected".format(c_pi))
+        for pi in pis:
+            self.__cpis.append(pigpio.pi(pi))
 
 
     def get_light_names(self, c_ip):
