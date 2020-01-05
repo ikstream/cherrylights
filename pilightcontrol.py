@@ -105,8 +105,6 @@ class LightControl():
         self.__c_pi_dict = dict()
         self.__lights = dict()
         self.__cpis = list()
-        self.__pi_ip = self.get_addresses_from_config()
-        print_pi_states(self.__pi_ip)
         self.__lower_limit = 5
         self.__upper_limit = 255
         self.__fade_time = 0.1
@@ -114,6 +112,7 @@ class LightControl():
         self._config = get_config(path)
         self.__path = path
         self.disable_fade()
+        self.__pi_ip = self.get_addresses_from_config()
         print_pi_states(self.__pi_ip)
 
 
