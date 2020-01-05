@@ -65,6 +65,29 @@ def print_pi_states(pi_ips):
             print("{} is not connected".format(c_pi))
 
 
+def get_config(path):
+    """
+    :param path (string): path to config file
+
+    return (class 'configparser.ConfigParser): config to use
+    """
+    config = configparser.ConfigParser()
+    config.read(path)
+
+    return config
+
+
+def pi_is_connected(c_pi):
+    """
+    check if the pi is connected to the network
+
+    :param pi (string): pi to lookup in network
+
+    :return (int): returns 1 on success, 0 else
+    """
+    return ON if c_pi.connected else OFF
+
+
 class LightControl():
     """
     Contains information and action about the light control
@@ -79,6 +102,7 @@ class LightControl():
                }
 
     def __init__(self, path):
+        self.__c_pi_dict = dict()
         self.__lights = dict()
         self.__cpis = list()
         self._config = self._get_config(path)
@@ -88,21 +112,11 @@ class LightControl():
         self.__upper_limit = 255
         self.__fade_time = 0.1
         self.__step_size = 1
+        self._config = get_config(path)
+        self.__pi_ip = self.get_addresses_from_config()
         self.__path = path
         self.disable_fade()
-        #self.turn_pi_lights(OFF)
-
-
-    def _get_config(self, path):
-        """
-        :param path (string): path to config file
-
-        return (class 'configparser.ConfigParser): config to use
-        """
-        config = configparser.ConfigParser()
-        config.read(path)
-
-        return config
+        print_pi_states(self.__pi_ip)
 
 
     def get_addresses_from_config(self):
@@ -131,11 +145,19 @@ class LightControl():
         return the names used for lights in config file
         these names have to be unique
 
-        :param: c_ip (string): ip address of the pi to handle
+        :param c_ip (string): ip address of the pi to handle
 
         return (list): list of light names
         """
-        return [light for light in self._get_config(self.__path)[c_ip]]
+        return [light for light in get_config(self.__path)[c_ip]]
+
+
+    def __set_control_pis(self):
+        """
+        create dictionary with ip, pigpio object
+        """
+        for pi_ip in self.__pi_ip:
+            self.__c_pi_dict[pi_ip] = pigpio.pi(pi_ip)
 
 
     def get_light_pins_from_config(self, c_ip, light):
@@ -262,11 +284,9 @@ class LightControl():
         """
         for c_ip in self.__pi_ip:
             if light in self.get_light_names(c_ip):
-                ret = c_ip
-            else:
-                ret = "{} not in config".format(light)
+                return c_ip
 
-            return ret
+        return "{} not in config".format(light)
 
 
     def resolve_lights(self, **web_lights):
@@ -279,17 +299,6 @@ class LightControl():
             self.__lights[re.search(r'\[(.*?)\]', key).group(1)] = web_lights[key]
 
 
-    def _pi_is_connected(self, c_pi):
-        """
-        check if the pi is connected to the network
-
-        :param pi (string): pi to lookup in network
-
-        :return (int): returns 1 on success, 0 else
-        """
-        return ON if c_pi.connected else OFF
-
-
     def get_pin_values(self, light):
         """
         retrieve values of light pins
@@ -298,10 +307,10 @@ class LightControl():
 
         :return (list): values of r/g/b pins
         """
-        control_pi = self.resolve_pi(light)
+        control_pi = self.__c_pi_dict[self.resolve_pi(light)]
         r_pin, g_pin, b_pin = self.get_light_pins_from_config(control_pi, light)
 
-        if self._pi_is_connected(control_pi):
+        if pi_is_connected(control_pi):
             fade_red = control_pi.get_PWM_dutycycle(r_pin)
             fade_green = control_pi.get_PWM_dutycycle(g_pin)
             fade_blue = control_pi.get_PWM_dutycycle(b_pin)
@@ -310,8 +319,7 @@ class LightControl():
 
         return [fade_red, fade_green, fade_blue]
 
-
-    def _set_dutycycle(self, c_ip, pin, value):
+    def __set_dutycycle(self, c_ip, pin, value):
         """
         Start/stop PWM pulses on a GPIO
 
@@ -319,8 +327,12 @@ class LightControl():
         :param pin (int): pin to set value on
         :param value (int): value to set
         """
-        if self._pi_is_connected(c_ip):
-            c_ip.set_PWM_dutycycle(pin, value)
+        c_pi_ip = self.__c_pi_dict[c_ip]
+        if pi_is_connected(c_pi_ip):
+            try:
+                c_pi_ip.set_PWM_dutycycle(pin, value)
+            except:
+                print("Something went wrong setting duty cycle of {}".format(c_ip))
         else:
             print("{} is not connected".format(c_ip))
 
@@ -353,7 +365,7 @@ class LightControl():
             color.alter_color = OFF
             color.change_next = 1
 
-        self._set_dutycycle(c_ip, pin, value)
+        self.__set_dutycycle(c_ip, pin, value)
 
         return color
 
@@ -412,4 +424,4 @@ class LightControl():
             self.unset_fade(light)
             c_pi = self.resolve_pi(light)
             for pin in self.get_light_pins_from_config(c_pi, light):
-                self._set_dutycycle(c_pi, pin, state)
+                self.__set_dutycycle(c_pi, pin, state)
